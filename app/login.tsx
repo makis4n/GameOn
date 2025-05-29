@@ -22,7 +22,7 @@ const login = () => {
   const signUp = async () => {
     try {
       const user = await createUserWithEmailAndPassword(auth, email, password)
-      if (user) router.replace('/(tabs)/signout');
+      if (user) router.replace('/createProfile');
     } catch (error: any) {
       console.log(error)
       alert('Sign up failed: ' + error. message);
