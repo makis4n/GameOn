@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-import './globals.css';
+import '@/app/globals.css';
 
 export default function Index() {
   return (

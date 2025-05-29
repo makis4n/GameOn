@@ -1,7 +1,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
-import { auth, db } from "../../Firebase-config";
+import { auth, db } from "@/Firebase-config";
 
 const Profile = () => {
   const [profile, setProfile] = useState<any>(null);

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { getAuth } from 'firebase/auth';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { auth } from '../../Firebase-config';
+import { auth } from '@/Firebase-config';
 
 export default function TabOneScreen() {
     getAuth().onAuthStateChanged((user) => {

@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import { db } from "../../Firebase-config";
+import { db } from "@/Firebase-config";
 
 export default function CreateListing() {
   const [task, setTask] = useState("");

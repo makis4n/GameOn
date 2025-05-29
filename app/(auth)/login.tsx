@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "fire
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { auth } from '../Firebase-config';
+import { auth } from '@/Firebase-config';
 
 const login = () => {
   const [email, setEmail] = useState('');

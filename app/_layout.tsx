@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useEffect } from 'react';
-import { auth } from '../Firebase-config';
+import { auth } from '@/Firebase-config';
 import './globals.css';
 
 export default function RootLayout() {

@@ -3,7 +3,7 @@ import { doc, setDoc } from "firebase/firestore";
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { auth, db } from "../Firebase-config";
+import { auth, db } from "@/Firebase-config";
 
 const CreateProfile = () => {
   const [username, setUsername] = useState('');
