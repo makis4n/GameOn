@@ -66,10 +66,7 @@ useEffect(() => {
           data={listing}
           renderItem={({ item }) => (
             <View style={styles.todoContainer}>
-              <Text style={{ textDecorationLine: item.completed ? 'line-through' : 'none', flex: 1 }}>{item.task}</Text>
-              <TouchableOpacity style={styles.button} onPress={() => updateListing(item.id, item.completed)}>
-                <Text style={styles.buttonText}>{item.completed ? "Undo" : "Complete"}</Text>
-              </TouchableOpacity>
+              <Text style={{ textDecorationLine: 'none', flex: 1 }}>{item.task}</Text>
               <TouchableOpacity style={styles.button} onPress={() => deleteListing(item.id)}>
                 <Text style={styles.buttonText}>Cancel</Text>
               </TouchableOpacity>
