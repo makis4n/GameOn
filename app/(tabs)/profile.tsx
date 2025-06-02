@@ -1,7 +1,9 @@
-import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Text, View, StyleSheet, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/Firebase-config";
+import { router } from "expo-router";
 
 const Profile = () => {
   const [profile, setProfile] = useState<any>(null);
@@ -26,16 +28,85 @@ const Profile = () => {
     fetchProfile();
   }, []);
 
-  if (loading) return <ActivityIndicator />;
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <View style={{ padding: 20 }}>
-      <Text style={{ fontSize: 20, marginBottom: 10 }}>Profile</Text>
-      <Text>Username: {profile?.username}</Text>
-      <Text>Age: {profile?.age}</Text>
-      <Text>Preferred Position: {profile?.position}</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Your Profile</Text>
+
+      <View style={styles.profileCard}>
+        <Text style={styles.label}>Username:</Text>
+        <Text style={styles.value}>{profile?.username}</Text>
+
+        <Text style={styles.label}>Age:</Text>
+        <Text style={styles.value}>{profile?.age}</Text>
+
+        <Text style={styles.label}>Preferred Position:</Text>
+        <Text style={styles.value}>{profile?.position}</Text>
+      </View>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={() => router.push("/signout")}>
+        <Text style={styles.logoutText}>Logout</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 };
 
 export default Profile;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 24,
+    backgroundColor: "#f9f9f9",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 24,
+    textAlign: "center",
+    color: "#333",
+  },
+  profileCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: 30,
+  },
+  label: {
+    fontWeight: "600",
+    color: "#555",
+    marginTop: 10,
+  },
+  value: {
+    fontSize: 16,
+    color: "#000",
+    marginTop: 2,
+  },
+  logoutButton: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 14,
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: "#fff",
+    fontWeight: "600",
+    textAlign: "center",
+    fontSize: 16,
+  },
+});

@@ -1,9 +1,10 @@
 import { router } from "expo-router";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from '@/Firebase-config';
+import { images } from "@/constants/images";
 
 const login = () => {
   const [email, setEmail] = useState('');
@@ -35,6 +36,9 @@ const login = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.innerContainer}
       >
+
+        <Image source={images.logo} style={{ width: 100, height: 100, alignSelf: 'center', marginBottom: 20 }} />
+        
         <Text style={styles.title}>Welcome to GameOn</Text>
 
         <TextInput
@@ -96,7 +100,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   button: {
-    backgroundColor: '#1e40af',
+    backgroundColor: '#007AFF',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',

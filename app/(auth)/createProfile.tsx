@@ -4,11 +4,20 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from "@/Firebase-config";
+import DropDownPicker from 'react-native-dropdown-picker';
 
 const CreateProfile = () => {
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState(null);
+  const [items, setItems] = useState([
+    { label: 'Striker', value: 'Striker' },
+    { label: 'Midfielder', value: 'Midfielder' },
+    { label: 'Defender', value: 'Defender' },
+    { label: 'Goalkeeper', value: 'Goalkeeper' },
+  ]);
+
   const [username, setUsername] = useState('');
   const [age, setAge] = useState('');
-  const [position, setPosition] = useState('');
 
   const handleSubmit = async () => {
   if (!username || !age || !position) {
@@ -62,12 +71,19 @@ const CreateProfile = () => {
           onChangeText={setAge}
         />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Preferred Position"
-          placeholderTextColor="#888"
+        <DropDownPicker
+          open={open}
           value={position}
-          onChangeText={setPosition}
+          items={items}
+          setOpen={setOpen}
+          setValue={setPosition}
+          setItems={setItems}
+          placeholder="Select Position"
+          placeholderStyle={{ color: '#888' }}
+          style={styles.input}
+          dropDownContainerStyle={{
+            backgroundColor: '#f0f0f0',
+          }}
         />
 
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
