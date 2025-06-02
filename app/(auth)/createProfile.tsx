@@ -1,47 +1,54 @@
-import { router } from 'expo-router';
-import { doc, setDoc } from "firebase/firestore";
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from "@/Firebase-config";
+import { router } from "expo-router";
+import { doc, setDoc } from "firebase/firestore";
+import React, { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const CreateProfile = () => {
-  const [username, setUsername] = useState('');
-  const [age, setAge] = useState('');
-  const [position, setPosition] = useState('');
+  const [username, setUsername] = useState("");
+  const [age, setAge] = useState("");
+  const [position, setPosition] = useState("");
 
   const handleSubmit = async () => {
-  if (!username || !age || !position) {
-    alert("Please fill out all fields.");
-    return;
-  }
-
-  try {
-    const userId = auth.currentUser?.uid;
-    if (!userId) {
-      alert("User not authenticated.");
+    if (!username || !age || !position) {
+      alert("Please fill out all fields.");
       return;
     }
 
-    await setDoc(doc(db, "users", userId), {
-      username,
-      age: parseInt(age),
-      position,
-    });
+    try {
+      const userId = auth.currentUser?.uid;
+      if (!userId) {
+        alert("User not authenticated.");
+        return;
+      }
 
-    alert("Profile created successfully!");
-    router.replace("/(tabs)/home");
-  } catch (error) {
-    console.error("Error creating profile:", error);
-    alert("Error saving profile. Please try again.");
-  }
-};
+      await setDoc(doc(db, "users", userId), {
+        username,
+        age: parseInt(age),
+        position,
+      });
+
+      alert("Profile created successfully!");
+      router.replace("../(tabs)/home");
+    } catch (error) {
+      console.error("Error creating profile:", error);
+      alert("Error saving profile. Please try again.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1, justifyContent: 'center' }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1, justifyContent: "center" }}
       >
         <Text style={styles.title}>Create Your Profile</Text>
 
@@ -84,17 +91,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 24,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
     height: 48,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
@@ -102,15 +109,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingVertical: 14,
     borderRadius: 8,
     marginTop: 12,
   },
   buttonText: {
-    color: 'white',
-    fontWeight: '600',
-    textAlign: 'center',
+    color: "white",
+    fontWeight: "600",
+    textAlign: "center",
     fontSize: 16,
   },
 });

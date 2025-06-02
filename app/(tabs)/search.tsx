@@ -1,12 +1,95 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import { db } from "@/Firebase-config"; // Adjust path as needed
+import { router } from "expo-router";
+import { collection, getDocs } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import {
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const search = () => {
+export default function search() {
+  const [query, setQuery] = useState("");
+  const [allUsers, setAllUsers] = useState<{ id: string; username: string }[]>(
+    []
+  );
+  const [filteredUsers, setFilteredUsers] = useState<typeof allUsers>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const snapshot = await getDocs(collection(db, "users"));
+      const users = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        username: doc.data().username || "",
+      }));
+      setAllUsers(users);
+    };
+
+    fetchUsers();
+  }, []);
+
+  const handleSearch = (text: string) => {
+    setQuery(text);
+    const filtered = allUsers.filter((user) =>
+      user.username.toLowerCase().startsWith(text.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  };
+
   return (
-    <View>
-      <Text>search</Text>
-    </View>
-  )
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <TextInput
+          placeholder="Search username..."
+          placeholderTextColor="#888"
+          value={query}
+          onChangeText={handleSearch}
+          style={styles.input}
+        />
+
+        <FlatList
+          data={filteredUsers}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: "/user/[id]",
+                  params: { id: item.id }, // item.id is the UID of the user
+                })
+              }
+            >
+              <Text>{item.username}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    </SafeAreaView>
+  );
 }
 
-export default search
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: "#fff" },
+  container: { padding: 20 },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  item: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  username: {
+    fontSize: 16,
+  },
+});
