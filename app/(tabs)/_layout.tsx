@@ -9,7 +9,6 @@ const _layout = () => {
         name='home'
         options={{
           title: 'Home',
-          headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color}/>
         }}
         />
@@ -17,7 +16,6 @@ const _layout = () => {
         name='search'
         options={{
           title: 'Search',
-          headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="magnify" color={color}/>
         }}
         />
@@ -25,15 +23,13 @@ const _layout = () => {
         name='createListing'
         options={{
           title: 'List',
-          headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="plus" color={color}/>
         }}
         />
         <Tabs.Screen 
         name='chat'
         options={{
-          title: 'Chat',
-          headerShown: false,
+          title: 'Chats',
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="message" color={color}/>
         }}
         />
@@ -41,7 +37,6 @@ const _layout = () => {
         name='profile'
         options={{
           title: 'Profile',
-          headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="account" color={color}/>
         }}
         />

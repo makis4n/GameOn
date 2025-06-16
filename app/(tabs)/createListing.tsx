@@ -1,3 +1,4 @@
+import { db } from "@/Firebase-config";
 import { getAuth } from "firebase/auth";
 import {
   addDoc,
@@ -19,14 +20,18 @@ import {
   View,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import { db } from "@/Firebase-config";
 
 export default function CreateListing() {
   const [task, setTask] = useState("");
   const [listing, setListing] = useState<any[]>([]);
+  const [location, setLocation] = useState("");
+  const [opponentSearch, setOpponentSearch] = useState("");
+  const [selectedOpponentTeam, setSelectedOpponentTeam] = useState<any>(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
   const auth = getAuth();
   const user = auth.currentUser;
-  const todosCollection = collection(db, "listings");
+  const listingsCollection = collection(db, "listings");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [dateTime, setDateTime] = useState(new Date());
 
@@ -45,7 +50,7 @@ export default function CreateListing() {
   const fetchListings = async () => {
     if (!user) return;
 
-    const q = query(todosCollection, where("userId", "==", user.uid));
+    const q = query(listingsCollection, where("userId", "==", user.uid));
     const data = await getDocs(q);
     const now = new Date();
 
@@ -67,13 +72,28 @@ export default function CreateListing() {
   const addListing = async () => {
     if (!user) return console.log("No user logged in");
 
-    await addDoc(todosCollection, {
+    const newListingRef = await addDoc(listingsCollection, {
       task,
-      completed: false,
+      location,
       userId: user.uid,
       dateTime: dateTime.toISOString(),
     });
+
+    if (selectedOpponentTeam) {
+      const ownerUid = selectedOpponentTeam.createdBy;
+      await addDoc(collection(db, "notifications"), {
+        to: ownerUid,
+        from: user.uid,
+        listingId: newListingRef.id,
+        teamId: selectedOpponentTeam.id,
+        message: `You've been invited to a game by ${user.email}`,
+        timestamp: new Date().toISOString(),
+      });
+    }
     setTask("");
+    setLocation("");
+    setOpponentSearch("");
+    setSelectedOpponentTeam(null);
     fetchListings();
   };
 
@@ -82,16 +102,40 @@ export default function CreateListing() {
     fetchListings();
   };
 
+  const searchTeamByName = async (text: string) => {
+    const teamsRef = collection(db, "teams");
+    const q = query(
+      teamsRef,
+      where("name", ">=", text),
+      where("name", "<=", text + "\uf8ff")
+    );
+
+    const querySnapshot = await getDocs(q);
+    const results = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    setSearchResults(results);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.mainTitle}>Create Game Listing</Text>
         <View style={styles.inputRow}>
           <TextInput
-            placeholder="Opposing Team Name"
+            placeholder="Title"
             placeholderTextColor="#aaa"
             value={task}
             onChangeText={setTask}
+            style={styles.input}
+          />
+          <TextInput
+            placeholder="Location"
+            placeholderTextColor="#aaa"
+            value={location}
+            onChangeText={setLocation}
             style={styles.input}
           />
           <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>

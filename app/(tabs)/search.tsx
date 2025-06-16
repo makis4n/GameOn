@@ -56,14 +56,15 @@ export default function search() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
+              style={styles.item}
               onPress={() =>
                 router.push({
                   pathname: "/user/[id]",
-                  params: { id: item.id }, // item.id is the UID of the user
+                  params: { id: item.id },
                 })
               }
             >
-              <Text>{item.username}</Text>
+              <Text style={styles.username}>{item.username}</Text>
             </TouchableOpacity>
           )}
         />
@@ -85,11 +86,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   item: {
-    padding: 12,
+    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+    marginVertical: 0,
   },
   username: {
     fontSize: 16,
+    lineHeight: 16,
   },
 });

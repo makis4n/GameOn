@@ -39,6 +39,18 @@ export default function RootLayout() {
           presentation: 'modal' 
         }} 
       />
+      <Stack.Screen 
+        name="(auth)/login" 
+        options={{ 
+          headerShown: false 
+        }}
+      />
+      <Stack.Screen
+        name="(auth)/createProfile"
+        options={{
+          headerShown: false 
+        }}
+      />
     </Stack>
   );
 }
