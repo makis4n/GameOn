@@ -22,7 +22,7 @@ const home = () => {
           <View style={{ position: "relative" }}>
             <Ionicons name="notifications-outline" size={24} color="#fff" />
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>{" "}
+              <Text style={styles.badgeText}>3</Text>
             </View>
           </View>
         </TouchableOpacity>

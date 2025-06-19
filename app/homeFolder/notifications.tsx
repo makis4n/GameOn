@@ -1,6 +1,7 @@
 import { auth, db } from "@/Firebase-config";
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   query,
@@ -28,7 +29,7 @@ export default function NotificationsPage() {
 
       const q = query(
         collection(db, "notifications"),
-        where("toUser", "==", user.uid)
+        where("to", "==", user.uid)
       );
 
       const querySnapshot = await getDocs(q);
@@ -43,14 +44,46 @@ export default function NotificationsPage() {
     fetchNotifications();
   }, []);
 
-  const markAsRead = async (notifId: string) => {
-    await updateDoc(doc(db, "notifications", notifId), {
+  const markAsRead = async (notif: any, response: "accepted" | "rejected") => {
+    await updateDoc(doc(db, "notifications", notif.id), {
+      status: response,
       read: true,
     });
 
+    if (response === "accepted") {
+      await updateDoc(doc(db, "listings", notif.listingId), {
+        status: "accepted",
+      });
+    }
+
     setNotifications((prev) =>
-      prev.map((n) => (n.id === notifId ? { ...n, read: true } : n))
+      prev.map((n) =>
+        n.id === notif.id ? { ...n, status: response, read: true } : n
+      )
     );
+  };
+
+  const clearNotification = async (notifId: string) => {
+    await deleteDoc(doc(db, "notifications", notifId));
+    setNotifications((prev) => prev.filter((n) => n.id !== notifId));
+  };
+
+  const clearAllNotifications = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const q = query(
+      collection(db, "notifications"),
+      where("to", "==", user.uid)
+    );
+    const snapshot = await getDocs(q);
+
+    const deletePromises = snapshot.docs.map((docSnap) =>
+      deleteDoc(doc(db, "notifications", docSnap.id))
+    );
+
+    await Promise.all(deletePromises);
+    setNotifications([]);
   };
 
   if (loading) {
@@ -64,22 +97,59 @@ export default function NotificationsPage() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Notifications</Text>
+      <TouchableOpacity
+        onPress={clearAllNotifications}
+        style={styles.clearAllButton}
+      >
+        <Text style={styles.clearAllText}>Clear All</Text>
+      </TouchableOpacity>
+
       <FlatList
         data={notifications}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => markAsRead(item.id)}
+            disabled={true}
             style={[
               styles.notificationCard,
               { backgroundColor: item.read ? "#eee" : "#fff" },
             ]}
           >
-            <Text style={styles.notifTitle}>{item.title}</Text>
+            <Text style={styles.notifTitle}>{item.title || "Team Invite"}</Text>
             <Text style={styles.notifMessage}>{item.message}</Text>
             <Text style={styles.notifTime}>
               {new Date(item.timestamp).toLocaleString()}
             </Text>
+
+            {item.status === "pending" && (
+              <React.Fragment>
+                <TouchableOpacity
+                  style={[styles.button, styles.accept]}
+                  onPress={() => markAsRead(item.id, "accepted")}
+                >
+                  <Text style={styles.buttonText}>Accept</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.reject]}
+                  onPress={() => markAsRead(item.id, "rejected")}
+                >
+                  <Text style={styles.buttonText}>Reject</Text>
+                </TouchableOpacity>
+              </React.Fragment>
+            )}
+
+            {item.status === "accepted" && (
+              <Text style={styles.statusText}>✅ Accepted</Text>
+            )}
+            {item.status === "rejected" && (
+              <Text style={styles.statusText}>❌ Rejected</Text>
+            )}
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#bbb", marginTop: 4 }]}
+              onPress={() => clearNotification(item.id)}
+            >
+              <Text style={styles.buttonText}>Dismiss</Text>
+            </TouchableOpacity>
           </TouchableOpacity>
         )}
       />
@@ -126,5 +196,42 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 12,
     color: "#999",
+  },
+  button: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  accept: {
+    backgroundColor: "#4CAF50",
+  },
+  reject: {
+    backgroundColor: "#F44336",
+    marginTop: 4,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  statusText: {
+    marginTop: 8,
+    fontWeight: "600",
+    color: "#555",
+  },
+  clearAllButton: {
+    marginBottom: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#007AFF",
+    borderRadius: 8,
+    alignSelf: "center",
+  },
+
+  clearAllText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });

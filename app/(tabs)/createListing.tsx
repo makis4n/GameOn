@@ -72,11 +72,25 @@ export default function CreateListing() {
   const addListing = async () => {
     if (!user) return console.log("No user logged in");
 
+    const teamsRef = collection(db, "teams");
+    const q = query(teamsRef, where("createdBy", "==", user.uid));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      alert("Only team owners can create listings.");
+      return;
+    }
+
+    const userTeamDoc = querySnapshot.docs[0];
+    const userTeamData = userTeamDoc.data();
+    const userTeamName = userTeamData.name;
+
     const newListingRef = await addDoc(listingsCollection, {
       task,
       location,
       userId: user.uid,
       dateTime: dateTime.toISOString(),
+      teamName: userTeamName,
     });
 
     if (selectedOpponentTeam) {
@@ -86,8 +100,10 @@ export default function CreateListing() {
         from: user.uid,
         listingId: newListingRef.id,
         teamId: selectedOpponentTeam.id,
-        message: `You've been invited to a game by ${user.email}`,
+        teamNameInvited: selectedOpponentTeam.name,
+        message: `You've been invited to a game by ${userTeamName}`,
         timestamp: new Date().toISOString(),
+        status: "pending",
       });
     }
     setTask("");
@@ -123,29 +139,69 @@ export default function CreateListing() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.mainTitle}>Create Game Listing</Text>
-        <View style={styles.inputRow}>
-          <TextInput
-            placeholder="Title"
-            placeholderTextColor="#aaa"
-            value={task}
-            onChangeText={setTask}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Location"
-            placeholderTextColor="#aaa"
-            value={location}
-            onChangeText={setLocation}
-            style={styles.input}
-          />
-          <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
-            <Text style={styles.buttonText}>Pick Date</Text>
-          </TouchableOpacity>
-        </View>
+        <TextInput
+          placeholder="Game Title"
+          placeholderTextColor="#aaa"
+          value={task}
+          onChangeText={setTask}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Location"
+          placeholderTextColor="#aaa"
+          value={location}
+          onChangeText={setLocation}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Opponent Team (Optional)"
+          placeholderTextColor="#aaa"
+          value={opponentSearch}
+          onChangeText={(text) => {
+            setOpponentSearch(text);
+            searchTeamByName(text);
+          }}
+          style={styles.input}
+        />
+
+        {searchResults.length > 0 && (
+          <View style={{ marginBottom: 10 }}>
+            {searchResults.map((team) => (
+              <TouchableOpacity
+                key={team.id}
+                onPress={() => {
+                  setSelectedOpponentTeam(team);
+                  setOpponentSearch(team.name);
+                  setSearchResults([]);
+                }}
+                style={{
+                  padding: 8,
+                  backgroundColor:
+                    selectedOpponentTeam?.id === team.id ? "#cce5ff" : "#eee",
+                  borderRadius: 5,
+                  marginVertical: 2,
+                }}
+              >
+                <Text style={{ fontSize: 14 }}>{team.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {selectedOpponentTeam && (
+          <Text style={{ marginBottom: 10, color: "#4CAF50", fontSize: 13 }}>
+            Selected Team: {selectedOpponentTeam.name}
+          </Text>
+        )}
+
+        <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
+          <Text style={styles.buttonText}>Pick Date</Text>
+        </TouchableOpacity>
         <Text style={styles.dateText}>
           Selected: {dateTime.toLocaleString()}
         </Text>
-        <TouchableOpacity style={styles.addButton} onPress={addListing}>
+
+        <TouchableOpacity style={styles.dateButton} onPress={addListing}>
           <Text style={styles.buttonText}>Create</Text>
         </TouchableOpacity>
 
@@ -156,6 +212,16 @@ export default function CreateListing() {
             <View style={styles.todoContainer}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.taskText}>{item.task}</Text>
+                <Text style={styles.taskText}>{item.task}</Text>
+
+                {item.status === "accepted" &&
+                  item.teamName &&
+                  item.teamNameInvited && (
+                    <Text style={styles.vsText}>
+                      {item.teamName} vs {item.teamNameInvited}
+                    </Text>
+                  )}
+                <Text style={styles.dateText}>Location: {item.location}</Text>
                 <Text style={styles.dateText}>
                   Game Time: {new Date(item.dateTime).toLocaleString()}
                 </Text>
@@ -169,7 +235,6 @@ export default function CreateListing() {
             </View>
           )}
         />
-
         <DateTimePickerModal
           isVisible={isDatePickerVisible}
           mode="datetime"
@@ -204,12 +269,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   input: {
-    flex: 1,
-    height: 40,
+    height: 50,
     borderColor: "gray",
     borderWidth: 1,
     borderRadius: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
     marginRight: 10,
     backgroundColor: "white",
   },
@@ -266,12 +330,18 @@ const styles = StyleSheet.create({
   },
   dateText: {
     marginTop: 5,
-    fontSize: 14,
+    fontSize: 16,
     color: "#555",
   },
   taskText: {
     fontSize: 16,
     fontWeight: "500",
     marginBottom: 4,
+  },
+  vsText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#444",
+    marginTop: 4,
   },
 });
