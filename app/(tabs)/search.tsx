@@ -18,6 +18,8 @@ export default function search() {
     []
   );
   const [filteredUsers, setFilteredUsers] = useState<typeof allUsers>([]);
+  const [allTeams, setAllTeams] = useState<{ id: string; name: string }[]>([]);
+  const [filteredTeams, setFilteredTeams] = useState<typeof allTeams>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -27,6 +29,13 @@ export default function search() {
         username: doc.data().username || "",
       }));
       setAllUsers(users);
+
+      const teamSnapshot = await getDocs(collection(db, "teams"));
+      const teams = teamSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || "",
+      }));
+      setAllTeams(teams);
     };
 
     fetchUsers();
@@ -34,10 +43,13 @@ export default function search() {
 
   const handleSearch = (text: string) => {
     setQuery(text);
-    const filtered = allUsers.filter((user) =>
-      user.username.toLowerCase().startsWith(text.toLowerCase())
+    const lower = text.toLowerCase();
+    setFilteredUsers(
+      allUsers.filter((user) => user.username.toLowerCase().startsWith(lower))
     );
-    setFilteredUsers(filtered);
+    setFilteredTeams(
+      allTeams.filter((team) => team.name.toLowerCase().startsWith(lower))
+    );
   };
 
   return (
@@ -53,7 +65,8 @@ export default function search() {
 
         <FlatList
           data={filteredUsers}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => "user-" + item.id}
+          ListHeaderComponent={<Text style={styles.sectionTitle}>Users</Text>}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.item}
@@ -65,6 +78,25 @@ export default function search() {
               }
             >
               <Text style={styles.username}>{item.username}</Text>
+            </TouchableOpacity>
+          )}
+        />
+
+        <FlatList
+          data={filteredTeams}
+          keyExtractor={(item) => "team-" + item.id}
+          ListHeaderComponent={<Text style={styles.sectionTitle}>Teams</Text>}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() =>
+                router.push({
+                  pathname: "/team/[id]",
+                  params: { id: item.id },
+                })
+              }
+            >
+              <Text style={styles.username}>{item.name}</Text>
             </TouchableOpacity>
           )}
         />
@@ -94,5 +126,11 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 16,
     lineHeight: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 20,
+    marginBottom: 8,
   },
 });

@@ -1,10 +1,77 @@
+import { db } from "@/Firebase-config";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
+import { getAuth } from "firebase/auth";
+import {
+  collection,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const home = () => {
+  const [upcomingGame, setUpcomingGame] = useState<any | null>(null);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUpcomingGame = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const q = query(
+        collection(db, "listings"),
+        where("userId", "==", user.uid),
+        where("status", "==", "accepted")
+      );
+
+      const snapshot = await getDocs(q);
+      const now = new Date();
+
+      const upcoming = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .filter((listing: any) => new Date(listing.dateTime) > now)
+        .sort(
+          (a: any, b: any) =>
+            new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+        );
+
+      if (upcoming.length > 0) {
+        setUpcomingGame(upcoming[0]);
+      } else {
+        setUpcomingGame(null);
+      }
+    };
+
+    const listenForUnreadNotifications = () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const q = query(
+        collection(db, "notifications"),
+        where("to", "==", user.uid),
+        where("read", "==", false)
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setNotificationCount(snapshot.size);
+      });
+
+      return unsubscribe;
+    };
+
+    fetchUpcomingGame();
+    const unsubscribeNotif = listenForUnreadNotifications();
+
+    return () => {
+      if (unsubscribeNotif) unsubscribeNotif();
+    };
+  }, []);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.rowButtons}>
@@ -14,25 +81,51 @@ const home = () => {
         >
           <Text style={styles.teamText}>Team</Text>
         </TouchableOpacity>
-
+        <View style={{ padding: 16 }}>
+          <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 8 }}>
+            Upcoming Game
+          </Text>
+          {upcomingGame ? (
+            <View
+              style={{
+                backgroundColor: "#fff",
+                padding: 12,
+                borderRadius: 8,
+                shadowColor: "#ccc",
+                shadowOpacity: 0.3,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 4,
+              }}
+            >
+              <Text style={{ fontSize: 16, fontWeight: "500" }}>
+                {upcomingGame.task}
+              </Text>
+              <Text style={{ color: "#666" }}>
+                {upcomingGame.teamName} vs {upcomingGame.teamNameInvited}
+              </Text>
+              <Text style={{ color: "#666" }}>
+                Location: {upcomingGame.location}
+              </Text>
+              <Text style={{ color: "#666" }}>
+                Date: {new Date(upcomingGame.dateTime).toLocaleString()}
+              </Text>
+            </View>
+          ) : (
+            <Text style={{ color: "#999" }}>No upcoming game</Text>
+          )}
+        </View>
         <TouchableOpacity
           style={styles.notificationButton}
           onPress={() => router.push("/homeFolder/notifications")}
         >
           <View style={{ position: "relative" }}>
             <Ionicons name="notifications-outline" size={24} color="#fff" />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
+            {notificationCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{notificationCount}</Text>
+              </View>
+            )}
           </View>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.contentContainer}>
-        <TouchableOpacity
-          style={styles.createTeamButton}
-          onPress={() => router.push("/homeFolder/createTeam")}
-        >
-          <Text style={styles.createTeamText}>Create Team</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
