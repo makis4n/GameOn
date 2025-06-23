@@ -34,23 +34,26 @@ export default function RootLayout() {
         }} 
       />
       <Stack.Screen
+        name="(auth)"
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="homeFolder"
+        options={{
+          headerShown: true,
+          title: '',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
         name="modal" 
         options={{ 
           presentation: 'modal' 
         }} 
       />
-      <Stack.Screen 
-        name="(auth)/login" 
-        options={{ 
-          headerShown: false 
-        }}
-      />
-      <Stack.Screen
-        name="(auth)/createProfile"
-        options={{
-          headerShown: false 
-        }}
-      />
+
     </Stack>
   );
 }

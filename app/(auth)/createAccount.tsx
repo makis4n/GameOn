@@ -67,7 +67,7 @@ const login = () => {
           }}
         />
 
-        <Text style={styles.title}>Welcome to GameOn</Text>
+        <Text style={styles.title}>Create Your Account</Text>
 
         <TextInput
           style={styles.input}
