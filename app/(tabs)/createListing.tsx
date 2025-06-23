@@ -276,6 +276,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     marginRight: 10,
     backgroundColor: "white",
+    marginBottom: 20,
   },
   dateButton: {
     padding: 10,
@@ -332,6 +333,8 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 16,
     color: "#555",
+    marginBottom: 20,
+    textAlign: "center"
   },
   taskText: {
     fontSize: 16,

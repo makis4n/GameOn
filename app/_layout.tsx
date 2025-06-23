@@ -53,7 +53,14 @@ export default function RootLayout() {
           presentation: 'modal' 
         }} 
       />
-
+      <Stack.Screen
+        name="signout"
+        options={{
+        presentation: 'modal',
+        title: 'Sign Out',
+        headerBackTitle: 'Back', // optional
+        }}
+      />
     </Stack>
   );
 }

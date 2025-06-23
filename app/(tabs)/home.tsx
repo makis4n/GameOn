@@ -82,8 +82,8 @@ const home = () => {
           <Text style={styles.teamText}>Team</Text>
         </TouchableOpacity>
         <View style={{ padding: 16 }}>
-          <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 8 }}>
-            Upcoming Game
+          <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 8,}}>
+            Upcoming Games
           </Text>
           {upcomingGame ? (
             <View
@@ -111,7 +111,7 @@ const home = () => {
               </Text>
             </View>
           ) : (
-            <Text style={{ color: "#999" }}>No upcoming game</Text>
+            <Text style={{ color: "#999", textAlign: "center" }}>No Upcoming Games</Text>
           )}
         </View>
         <TouchableOpacity
