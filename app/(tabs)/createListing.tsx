@@ -91,6 +91,7 @@ export default function CreateListing() {
       userId: user.uid,
       dateTime: dateTime.toISOString(),
       teamName: userTeamName,
+      status: "pending",
     });
 
     if (selectedOpponentTeam) {
@@ -211,7 +212,6 @@ export default function CreateListing() {
           renderItem={({ item }) => (
             <View style={styles.todoContainer}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.taskText}>{item.task}</Text>
                 <Text style={styles.taskText}>{item.task}</Text>
 
                 {item.status === "accepted" &&

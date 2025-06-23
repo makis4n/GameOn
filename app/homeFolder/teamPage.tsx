@@ -1,4 +1,5 @@
 import { auth, db } from "@/Firebase-config";
+import { router } from "expo-router";
 import {
   collection,
   deleteDoc,
@@ -157,6 +158,12 @@ export default function TeamPage() {
     return (
       <SafeAreaView style={styles.container}>
         <Text style={styles.title}>You are not in a team.</Text>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#007AFF" }]}
+          onPress={() => router.push("/homeFolder/createTeam")}
+        >
+          <Text style={styles.buttonText}>Create a Team</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }

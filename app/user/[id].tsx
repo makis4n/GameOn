@@ -1,6 +1,6 @@
 import { auth, db } from "@/Firebase-config";
-import { useLocalSearchParams } from "expo-router";
-import { addDoc, collection, doc, getDoc } from "firebase/firestore";
+import { router, useLocalSearchParams } from "expo-router";
+import { addDoc, collection, doc, getDoc, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -85,6 +85,34 @@ const UserProfile = () => {
 
         <Text style={styles.label}>Preferred Position:</Text>
         <Text style={styles.value}>{profile.position}</Text>
+
+        <Text style={styles.label}>Team:</Text>
+        <TouchableOpacity
+          style={styles.value}
+          onPress={async () => {
+            if (!profile?.team) return;
+            try {
+              const snapshot = await getDocs(collection(db, "teams"));
+              const matchingTeam = snapshot.docs.find(
+                (doc) => doc.data().name === profile.team
+              );
+
+              if (matchingTeam) {
+                router.push({
+                  pathname: "/team/[id]",
+                  params: { id: matchingTeam.id },
+                });
+              } else {
+                alert("Team not found");
+              }
+            } catch (err) {
+              console.error("Error fetching team:", err);
+              alert("Something went wrong while finding the team.");
+            }
+          }}
+        >
+          <Text style={styles.value}>{profile?.team}</Text>
+        </TouchableOpacity>
       </View>
       {isCreator && (
         <TouchableOpacity
@@ -99,6 +127,7 @@ const UserProfile = () => {
                 fromUser: currentUserId,
                 type: "invite",
                 timestamp: Date.now(),
+                status: "pending",
               });
               alert("Invite sent!");
             } catch (err) {

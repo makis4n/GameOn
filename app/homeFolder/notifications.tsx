@@ -45,22 +45,27 @@ export default function NotificationsPage() {
   }, []);
 
   const markAsRead = async (notif: any, response: "accepted" | "rejected") => {
-    await updateDoc(doc(db, "notifications", notif.id), {
-      status: response,
-      read: true,
-    });
-
-    if (response === "accepted") {
-      await updateDoc(doc(db, "listings", notif.listingId), {
-        status: "accepted",
+    try {
+      await updateDoc(doc(db, "notifications", notif.id), {
+        status: response,
+        read: true,
       });
-    }
 
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === notif.id ? { ...n, status: response, read: true } : n
-      )
-    );
+      if (response === "accepted" && notif.listingId) {
+        await updateDoc(doc(db, "listings", notif.listingId), {
+          status: "accepted",
+        });
+      }
+
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notif.id ? { ...n, status: response, read: true } : n
+        )
+      );
+    } catch (err) {
+      console.error("Error updating status:", err);
+      alert("Something went wrong. Check logs.");
+    }
   };
 
   const clearNotification = async (notifId: string) => {
@@ -125,13 +130,13 @@ export default function NotificationsPage() {
               <React.Fragment>
                 <TouchableOpacity
                   style={[styles.button, styles.accept]}
-                  onPress={() => markAsRead(item.id, "accepted")}
+                  onPress={() => markAsRead(item, "accepted")}
                 >
                   <Text style={styles.buttonText}>Accept</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.button, styles.reject]}
-                  onPress={() => markAsRead(item.id, "rejected")}
+                  onPress={() => markAsRead(item, "rejected")}
                 >
                   <Text style={styles.buttonText}>Reject</Text>
                 </TouchableOpacity>

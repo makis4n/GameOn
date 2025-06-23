@@ -1,6 +1,6 @@
 import { auth, db } from "@/Firebase-config";
 import { router } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -16,22 +16,17 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-
+    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
       if (docSnap.exists()) {
         setProfile(docSnap.data());
-      } else {
-        console.log("No profile found");
       }
       setLoading(false);
-    };
+    });
 
-    fetchProfile();
+    return () => unsubscribe();
   }, []);
 
   if (loading) {

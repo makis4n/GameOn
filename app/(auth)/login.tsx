@@ -1,7 +1,8 @@
-import { auth } from "@/Firebase-config";
+import { auth, db } from "@/Firebase-config";
 import { images } from "@/constants/images";
 import { router } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
   Image,
@@ -17,9 +18,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(false);
 
   const signIn = async () => {
     try {
+      setCheckingAuth(true);
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -29,11 +32,21 @@ const login = () => {
 
       if (!user.emailVerified) {
         alert("Please verify your email before logging in.");
+        setCheckingAuth(false);
         return;
       }
 
-      router.replace("/(tabs)/home");
+      const profileDoc = await getDoc(doc(db, "users", user.uid));
+
+      if (profileDoc.exists()) {
+        router.replace("/(tabs)/home");
+      } else {
+        router.replace("/createProfile");
+      }
+
+      setCheckingAuth(false);
     } catch (error: any) {
+      setCheckingAuth(false);
       console.log(error);
       alert("Sign in failed: " + error.message);
     }
