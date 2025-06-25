@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SignOutScreen() {
   useEffect(() => {
     const unsubscribe = getAuth().onAuthStateChanged((user) => {
-      if (!user) router.replace('/login'); // navigate to login if logged out
+      if (!user) router.replace('/'); // navigate to login if logged out
     });
 
     return unsubscribe; // cleanup listener

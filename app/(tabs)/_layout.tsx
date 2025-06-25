@@ -1,10 +1,45 @@
 import FontAwesome from '@expo/vector-icons/MaterialCommunityIcons';
-import { Tabs } from 'expo-router'
-import React from 'react'
+import { Tabs, router } from 'expo-router'
+import { doc, getDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react'
+import { db, auth } from '@/Firebase-config';
+import { onAuthStateChanged } from 'firebase/auth';
+import { ActivityIndicator } from "react-native";
 
-const _layout = () => {
+export default function Layout() {
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const profileDoc = await getDoc(doc(db, "users", user.uid));
+        if (!profileDoc.exists()) {
+          router.replace("/createProfile");
+        }
+      } else {
+        router.replace("/");
+      }
+
+      setIsLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  if (isLoading) {
+    return (
+      <ActivityIndicator
+        size="large"
+        color="#007AFF"
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      />
+    );
+  }
+
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: 'blue'}}>
+    <Tabs screenOptions={{ 
+      tabBarActiveTintColor: 'blue',
+      }}>
       <Tabs.Screen 
         name='home'
         options={{
@@ -43,5 +78,3 @@ const _layout = () => {
     </Tabs>
   )
 }
-
-export default _layout

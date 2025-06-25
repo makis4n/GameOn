@@ -20,27 +20,21 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <Stack>
-      <Stack.Screen 
-        name="index" 
-        options={{
-          headerShown: false 
-        }} 
-      />
-      <Stack.Screen 
-        name="(tabs)" 
-        options={{
-          headerShown: false 
-        }} 
-      />
+    <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+    >
       <Stack.Screen
-        name="(auth)"
+        name="createAccount"
         options={{
-          headerShown: false
+            headerShown: true,
+          title: '',
+          headerBackTitle: 'Back',
         }}
       />
       <Stack.Screen
-        name="homeFolder"
+        name="createProfile"
         options={{
           headerShown: true,
           title: '',
@@ -56,9 +50,27 @@ export default function RootLayout() {
       <Stack.Screen
         name="signout"
         options={{
-        presentation: 'modal',
-        title: 'Sign Out',
-        headerBackTitle: 'Back', // optional
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="homeFolder"
+        options={{
+          headerShown: true,
+          title: '',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="team"
+        options={{
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="user"
+        options={{
+          presentation: 'modal',
         }}
       />
     </Stack>
