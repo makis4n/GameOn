@@ -1,25 +1,31 @@
-import { router } from 'expo-router';
-import { getAuth } from 'firebase/auth';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { auth } from '@/Firebase-config';
-import { useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { auth } from "@/Firebase-config";
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignOutScreen() {
+  const [hasSignedOut, setHasSignedOut] = useState(false);
+
   useEffect(() => {
-    const unsubscribe = getAuth().onAuthStateChanged((user) => {
-      if (!user) router.replace('/login'); // navigate to login if logged out
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user && hasSignedOut) {
+        router.replace("/login");
+      }
     });
 
-    return unsubscribe; // cleanup listener
-  }, []);
+    return unsubscribe;
+  }, [hasSignedOut]);
 
   const handleSignOut = async () => {
     try {
+      // No need to track unsubscribe here if handled properly in pages
+
+      setHasSignedOut(true);
       await auth.signOut();
     } catch (error) {
-      console.error('Sign out failed:', error);
-      alert('Failed to sign out. Please try again.');
+      console.error("Sign out failed:", error);
+      alert("Failed to sign out. Please try again.");
     }
   };
 
@@ -37,28 +43,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 24,
-    color: '#333',
-    textAlign: 'center',
+    color: "#333",
+    textAlign: "center",
   },
   button: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: "#FF3B30",
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 8,
     elevation: 2,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

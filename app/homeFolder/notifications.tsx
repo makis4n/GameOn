@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   query,
   updateDoc,
@@ -22,25 +23,25 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchNotifications = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const q = query(
+      collection(db, "notifications"),
+      where("to", "==", user.uid)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const notifs = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setNotifications(notifs);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchNotifications = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const q = query(
-        collection(db, "notifications"),
-        where("to", "==", user.uid)
-      );
-
-      const querySnapshot = await getDocs(q);
-      const notifs = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setNotifications(notifs);
-      setLoading(false);
-    };
-
     fetchNotifications();
   }, []);
 
@@ -54,8 +55,32 @@ export default function NotificationsPage() {
       if (response === "accepted" && notif.listingId) {
         await updateDoc(doc(db, "listings", notif.listingId), {
           status: "accepted",
+          read: true,
         });
       }
+
+      if (response === "accepted" && notif.teamId) {
+        await updateDoc(doc(db, "users", notif.to), {
+          team: notif.teamId,
+          read: true,
+        });
+
+        const teamDocRef = doc(db, "teams", notif.teamId);
+        const teamDocSnap = await getDoc(teamDocRef);
+
+        if (teamDocSnap.exists()) {
+          const teamData = teamDocSnap.data();
+          const updatedMembers = [
+            ...new Set([...(teamData.members || []), notif.to]),
+          ];
+
+          await updateDoc(teamDocRef, {
+            members: updatedMembers,
+          });
+        }
+      }
+
+      fetchNotifications();
 
       setNotifications((prev) =>
         prev.map((n) =>

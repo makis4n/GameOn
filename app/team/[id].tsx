@@ -69,10 +69,12 @@ export default function TeamPage() {
         to: team.createdBy,
         from: userId,
         teamId: id,
+        teamName: team.name,
         message: "Request to join your team",
         timestamp: new Date().toISOString(),
         type: "join_request",
         status: "pending",
+        read: false,
       });
       Alert.alert("Requested", "Join request sent to team owner.");
     } catch (err) {

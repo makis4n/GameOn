@@ -1,6 +1,5 @@
 import { auth } from "@/Firebase-config";
 import { images } from "@/constants/images";
-import { router } from "expo-router";
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -17,7 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const login = () => {
+const createAccount = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -34,7 +33,6 @@ const login = () => {
       alert(
         "Verification email sent. Please verify your email before logging in."
       );
-      router.replace("/login");
     } catch (error: any) {
       console.log(error);
       alert("Sign up failed: " + error.message);
@@ -67,7 +65,7 @@ const login = () => {
           }}
         />
 
-        <Text style={styles.title}>Create Your Account</Text>
+        <Text style={styles.title}>Welcome to GameOn</Text>
 
         <TextInput
           style={styles.input}
@@ -103,7 +101,7 @@ const login = () => {
   );
 };
 
-export default login;
+export default createAccount;
 
 const styles = StyleSheet.create({
   container: {

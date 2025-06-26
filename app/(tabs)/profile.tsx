@@ -19,7 +19,8 @@ const Profile = () => {
     const user = auth.currentUser;
     if (!user) return;
 
-    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+    const userDoc = doc(db, "users", user.uid);
+    const unsubscribe = onSnapshot(userDoc, (docSnap) => {
       if (docSnap.exists()) {
         setProfile(docSnap.data());
       }
