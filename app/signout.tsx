@@ -12,8 +12,6 @@ export default function SignOutScreen() {
       if (!user && hasSignedOut) {
         router.replace("/login");
       }
-    });
-
     return unsubscribe;
   }, [hasSignedOut]);
 

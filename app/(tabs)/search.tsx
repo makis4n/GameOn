@@ -132,5 +132,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 20,
     marginBottom: 8,
+    textDecorationLine: 'underline',
   },
 });

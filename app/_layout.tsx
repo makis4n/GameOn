@@ -20,18 +20,47 @@ export default function RootLayout() {
 
   return (
     <Stack>
-      <Stack.Screen
-        name="index"
+      <Stack.Screen 
+        name="index" 
         options={{
-          headerShown: false,
+          headerShown: false 
+        }} 
+      />
+      <Stack.Screen 
+        name="(tabs)" 
+        options={{
+          headerShown: true,
+          title: '',
+          headerBackTitle: 'Back',
         }}
       />
       <Stack.Screen
-        name="(tabs)"
+        name="modal" 
+        options={{ 
+          presentation: 'modal' 
+        }} 
+      />
+      <Stack.Screen
+        name="signout"
         options={{
-          headerShown: false,
+          presentation: 'modal',
         }}
       />
+      <Stack.Screen
+        name="homeFolder"
+        options={{
+          headerShown: true,
+          title: '',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="modal" 
+        options={{ 
+          presentation: 'modal' 
+        }} 
+      />
+
     </Stack>
   );
 }

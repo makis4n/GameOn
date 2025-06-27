@@ -176,6 +176,7 @@ const Home = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+<<<<<<< HEAD
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <View style={styles.topRow}>
           <TouchableOpacity
@@ -189,6 +190,30 @@ const Home = () => {
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => router.push("/homeFolder/weatherforecast")}
+=======
+      <View style={styles.rowButtons}>
+        <TouchableOpacity
+          style={styles.teamButton}
+          onPress={() => router.push("/homeFolder/teamPage")}
+        >
+          <Text style={styles.teamText}>Team</Text>
+        </TouchableOpacity>
+        <View style={{ padding: 16 }}>
+          <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 8,}}>
+            Upcoming Games
+          </Text>
+          {upcomingGame ? (
+            <View
+              style={{
+                backgroundColor: "#fff",
+                padding: 12,
+                borderRadius: 8,
+                shadowColor: "#ccc",
+                shadowOpacity: 0.3,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 4,
+              }}
+>>>>>>> 64f28bea5e66dea3b400468e4f6a71a2f28fb3b0
             >
               <Ionicons name="cloud-outline" size={24} color="#fff" />
             </TouchableOpacity>
@@ -249,7 +274,11 @@ const Home = () => {
               </TouchableOpacity>
             </View>
           ) : (
+<<<<<<< HEAD
             <Text style={styles.emptyText}>No upcoming game</Text>
+=======
+            <Text style={{ color: "#999", textAlign: "center" }}>No Upcoming Games</Text>
+>>>>>>> 64f28bea5e66dea3b400468e4f6a71a2f28fb3b0
           )}
         </View>
 

@@ -1,8 +1,9 @@
-import { auth, db } from "@/Firebase-config";
+import { auth } from "@/Firebase-config";
 import { images } from "@/constants/images";
-import { router } from "expo-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
 import React, { useState } from "react";
 import {
   Image,
@@ -15,40 +16,40 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const login = () => {
+const createAccount = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [checkingAuth, setCheckingAuth] = useState(false);
 
-  const signIn = async () => {
+  const signUp = async () => {
     try {
-      setCheckingAuth(true);
-      const userCredential = await signInWithEmailAndPassword(
+      const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
       const user = userCredential.user;
 
-      if (!user.emailVerified) {
-        alert("Please verify your email before logging in.");
-        setCheckingAuth(false);
-        return;
-      }
-
-      const profileDoc = await getDoc(doc(db, "users", user.uid));
-
-      if (profileDoc.exists()) {
-        router.replace("/(tabs)/home");
-      } else {
-        router.replace("/createProfile");
-      }
-
-      setCheckingAuth(false);
+      await sendEmailVerification(user);
+      alert(
+        "Verification email sent. Please verify your email before logging in."
+      );
+<<<<<<< HEAD:app/(auth)/createAccount.tsx
+=======
+      router.replace("/");
+>>>>>>> 64f28bea5e66dea3b400468e4f6a71a2f28fb3b0:app/createAccount.tsx
     } catch (error: any) {
-      setCheckingAuth(false);
       console.log(error);
-      alert("Sign in failed: " + error.message);
+      alert("Sign up failed: " + error.message);
+    }
+  };
+
+  const resendVerification = async () => {
+    const user = auth.currentUser;
+    if (user && !user.emailVerified) {
+      await sendEmailVerification(user);
+      alert("Verification email sent again.");
+    } else {
+      alert("Please log in first to resend verification email.");
     }
   };
 
@@ -88,23 +89,23 @@ const login = () => {
           onChangeText={setPassword}
           secureTextEntry
         />
-
-        <TouchableOpacity style={styles.button} onPress={signIn}>
-          <Text style={styles.buttonText}>Login</Text>
+        <TouchableOpacity style={styles.button} onPress={signUp}>
+          <Text style={styles.buttonText}>Create Account</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.secondaryButton}
-          onPress={() => router.push("/createAccount")}
+          onPress={resendVerification}
         >
-          <Text style={styles.secondaryButtonText}>Create Account</Text>
+          <Text style={styles.secondaryButtonText}>
+            Resend Verification Email
+          </Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
-export default login;
+export default createAccount;
 
 const styles = StyleSheet.create({
   container: {

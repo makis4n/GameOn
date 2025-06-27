@@ -162,7 +162,7 @@ export default function TeamPage() {
           style={[styles.button, { backgroundColor: "#007AFF" }]}
           onPress={() => router.push("/homeFolder/createTeam")}
         >
-          <Text style={styles.buttonText}>Create a Team</Text>
+          <Text style={styles.buttonText}>Create or Join a Team</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
