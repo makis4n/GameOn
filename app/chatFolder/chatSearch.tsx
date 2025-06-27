@@ -14,6 +14,7 @@ import {
   FlatList,
   Keyboard,
   Pressable,
+  StyleSheet,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
@@ -26,8 +27,6 @@ export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<any[]>([]);
 
-  // Function to fetch search results based on the input text
-  // It queries the "users" collection in Firestore for emails that match the input text
   const getSearchResults = async (text: string) => {
     text = text.toLowerCase();
 
@@ -39,17 +38,11 @@ export default function SearchScreen() {
       where("email", "!=", auth.currentUser?.email)
     );
     const res = await getDocs(q);
-    if (res) {
-      let users: any[] = [];
-      res.docs.forEach((doc) => users.push(doc.data()));
-      return users;
-    }
-
-    return [];
+    const users: any[] = [];
+    res.docs.forEach((doc) => users.push(doc.data()));
+    return users;
   };
 
-  // Fetch users when the component mounts or when searchQuery changes
-  // This will update the users state with the results from getSearchResults
   useEffect(() => {
     async function fetchUsers() {
       setUsers(await getSearchResults(searchQuery));
@@ -58,45 +51,37 @@ export default function SearchScreen() {
     fetchUsers();
   }, [searchQuery]);
 
-  // Handle form submission when the user presses the search button
   const handleSubmit = async (text: string) => {
     setUsers(await getSearchResults(text));
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, paddingTop: top }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          marginHorizontal: 10,
-        }}
-      >
+    <SafeAreaView style={[styles.container, { paddingTop: 10 }]}>
+      <View style={styles.searchRow}>
         <Pressable
-          style={{ paddingLeft: 10, marginRight: 15 }}
           onPress={() => router.back()}
+          hitSlop={10}
+          style={styles.backButton}
         >
           {({ pressed }) => (
             <FontAwesome
               name="chevron-left"
-              size={25}
-              color={"black"}
-              style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+              size={24}
+              color="black"
+              style={{ opacity: pressed ? 0.5 : 1 }}
             />
           )}
         </Pressable>
 
         <TextInput
-          mode={"outlined"}
+          mode="outlined"
           returnKeyType="search"
-          placeholder="Search Users ..."
-          autoFocus
+          placeholder="Search users by email..."
           dense
-          style={{ width: "75%" }}
+          autoFocus
+          style={styles.searchInput}
           onChangeText={setSearchQuery}
-          onSubmitEditing={async (e) => {
-            await handleSubmit(e.nativeEvent.text);
-          }}
+          onSubmitEditing={(e) => handleSubmit(e.nativeEvent.text)}
         />
       </View>
 
@@ -104,43 +89,30 @@ export default function SearchScreen() {
         <View style={{ flex: 1 }}>
           {searchQuery ? (
             users.length === 0 ? (
-              <View
-                style={{
-                  flex: 0.75,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Text variant="titleLarge" style={{ fontWeight: "bold" }}>
+              <View style={styles.emptyState}>
+                <Text variant="titleLarge" style={styles.emptyText}>
                   No Users Found
                 </Text>
               </View>
             ) : (
               <FlatList
-                style={{ marginTop: 10 }}
                 data={users}
                 keyExtractor={(item) => item._id}
+                contentContainerStyle={{ paddingBottom: 32 }}
                 renderItem={({ item }) => (
                   <Pressable
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      paddingVertical: 20,
-                      paddingHorizontal: 10,
-                      borderBottomColor: "gray",
-                      borderBottomWidth: 1,
-                    }}
                     onPress={() =>
                       router.navigate({
                         pathname: "/chatFolder/[id]",
-                        params: {
-                          id: item._id,
-                          email: item.email,
-                        },
+                        params: { id: item._id, email: item.email },
                       })
                     }
+                    style={({ pressed }) => [
+                      styles.userItem,
+                      { backgroundColor: pressed ? "#f0f0f0" : "#fff" },
+                    ]}
                   >
-                    <Text variant="titleLarge" style={{ fontWeight: "bold" }}>
+                    <Text variant="titleMedium" style={styles.userText}>
                       {item.email}
                     </Text>
                   </Pressable>
@@ -148,14 +120,8 @@ export default function SearchScreen() {
               />
             )
           ) : (
-            <View
-              style={{
-                flex: 0.75,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Text variant="titleLarge" style={{ fontWeight: "bold" }}>
+            <View style={styles.emptyState}>
+              <Text variant="titleLarge" style={styles.emptyText}>
                 Search Users by Email
               </Text>
             </View>
@@ -165,3 +131,43 @@ export default function SearchScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f9f9f9",
+    paddingHorizontal: 16,
+  },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontWeight: "bold",
+    color: "#777",
+  },
+  userItem: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderBottomColor: "#ddd",
+    borderBottomWidth: 1,
+  },
+  userText: {
+    fontWeight: "bold",
+  },
+});

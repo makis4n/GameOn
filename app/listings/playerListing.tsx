@@ -9,11 +9,14 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator
 } from "react-native";
 import "react-native-get-random-values";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { FontAwesome } from "@expo/vector-icons";
+import { router } from 'expo-router';
 
 export default function PlayerListing() {
   const [teamName, setTeamName] = useState("");
@@ -103,21 +106,25 @@ export default function PlayerListing() {
   };
 
   if (loading)
-    return (
-      <SafeAreaView>
-        <Text>Loading...</Text>
-      </SafeAreaView>
-    );
+    return <ActivityIndicator size="small" style={{ marginVertical: 10 }} />;
 
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={styles.backButton}
+        activeOpacity={0.6}
+      >
+        <FontAwesome name="chevron-left" size={24} color="black" />
+      </TouchableOpacity>
+
       <Text style={styles.title}>Create Player Listing</Text>
 
       <Text style={styles.label}>Team Name</Text>
       <Text style={styles.value}>{teamName}</Text>
       <View style={{ zIndex: 1, flex: 0.5 }}>
         <GooglePlacesAutocomplete
-          placeholder="Search"
+          placeholder="Location"
           onPress={(data, details = null) => {
             const selectedLocation =
               details?.formatted_address ?? data.description ?? "";
@@ -137,7 +144,7 @@ export default function PlayerListing() {
             container: { flex: 0 },
             textInput: {
               borderWidth: 1,
-              borderColor: "#ccc",
+              borderColor: "#gray",
               borderRadius: 8,
               padding: 10,
               color: "#555",
@@ -192,13 +199,27 @@ export default function PlayerListing() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: "#fff" },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 24 },
-  label: { fontWeight: "600", marginTop: 12 },
+  container: { 
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+    justifyContent: 'center',
+    alignContent: 'center',
+    marginTop: -180
+   },
+  title: { 
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 20,
+    marginTop: -30,
+    textAlign: "center",
+    color: "#333",
+   },
+  label: { fontWeight: "600" },
   value: { marginBottom: 12, color: "#333" },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#gray",
     borderRadius: 8,
     padding: 10,
     marginBottom: 16,
@@ -220,4 +241,11 @@ const styles = StyleSheet.create({
     color: "#555",
     textAlign: "center",
   },
+  backButton: {
+    padding: 10,
+    alignSelf: "flex-start",
+    marginBottom: 10,
+    paddingLeft: -10
+  },
+
 });

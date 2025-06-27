@@ -18,8 +18,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Pressable,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { router } from 'expo-router';
+import { FontAwesome } from "@expo/vector-icons";
 
 export default function GameListing() {
   const [task, setTask] = useState("");
@@ -141,6 +144,13 @@ export default function GameListing() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          activeOpacity={0.6}
+        >
+          <FontAwesome name="chevron-left" size={24} color="black" />
+        </TouchableOpacity>
         <Text style={styles.mainTitle}>Create Game Listing</Text>
         <TextInput
           placeholder="Game Title"
@@ -205,7 +215,7 @@ export default function GameListing() {
         </Text>
 
         <TouchableOpacity style={styles.dateButton} onPress={addListing}>
-          <Text style={styles.buttonText}>Create</Text>
+          <Text style={styles.buttonText}>Create Listing</Text>
         </TouchableOpacity>
 
         <FlatList
@@ -260,11 +270,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#f8f9fa",
+    justifyContent: 'center',
+    alignContent: 'center'
   },
   mainTitle: {
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 20,
+    marginTop: -30,
     textAlign: "center",
     color: "#333",
   },
@@ -281,11 +294,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     marginRight: 10,
     backgroundColor: "white",
+    marginBottom: 10
   },
   dateButton: {
     padding: 10,
     borderRadius: 10,
-    backgroundColor: "#26A69A",
+    backgroundColor: "#007AFF",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#26A69A",
@@ -337,6 +351,8 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 16,
     color: "#555",
+    marginBottom: 15,
+    textAlign: 'center'
   },
   taskText: {
     fontSize: 16,
@@ -348,5 +364,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#444",
     marginTop: 4,
+  },
+  backButton: {
+    padding: 10,
+    alignSelf: "flex-start",
+    marginBottom: 10,
+    paddingLeft: -10
   },
 });

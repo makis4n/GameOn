@@ -27,7 +27,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Home = () => {
-  const [upcomingGame, setUpcomingGame] = useState<any | null>(null);
+  const [upcomingGame, setUpcomingGame] = useState<any>(null);
   const [gamesHappening, setGamesHappening] = useState<any[]>([]);
   const [playerListings, setPlayerListings] = useState<any[]>([]);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -38,6 +38,7 @@ const Home = () => {
 
   useEffect(() => {
     const authInstance = getAuth();
+
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
@@ -84,7 +85,6 @@ const Home = () => {
       );
       unsubListing = onSnapshot(listingQuery, (snapshot) => {
         const now = new Date();
-
         const allListings = snapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
           .filter((listing: any) => new Date(listing.dateTime) > now);
@@ -115,7 +115,25 @@ const Home = () => {
           id: doc.id,
           ...doc.data(),
         }));
-        setPlayerListings(listings);
+
+        if (userLocation) {
+          const nearbyListings = listings.filter((listing: any) => {
+            if (listing.latitude && listing.longitude) {
+              const distance = getDistanceFromLatLonInKm(
+                userLocation.latitude,
+                userLocation.longitude,
+                listing.latitude,
+                listing.longitude
+              );
+              return distance <= 10; // within 10 km radius
+            }
+            return false;
+          });
+
+          setPlayerListings(nearbyListings);
+        } else {
+          setPlayerListings(listings);
+        }
       });
     });
 
@@ -125,7 +143,7 @@ const Home = () => {
       if (unsubListing) unsubListing();
       if (unsubPlayerListings) unsubPlayerListings();
     };
-  }, []);
+  }, [userLocation]);
 
   function getDistanceFromLatLonInKm(
     lat1: number,
@@ -133,7 +151,7 @@ const Home = () => {
     lat2: number,
     lon2: number
   ) {
-    const R = 6371; // Radius of the earth in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a =
@@ -143,33 +161,9 @@ const Home = () => {
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
+    return R * c;
   }
-  unsubPlayerListings = onSnapshot(playerListingsQuery, (snapshot) => {
-    const listings = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
 
-    if (userLocation) {
-      const nearbyListings = listings.filter((listing: any) => {
-        if (listing.latitude && listing.longitude) {
-          const distance = getDistanceFromLatLonInKm(
-            userLocation.latitude,
-            userLocation.longitude,
-            listing.latitude,
-            listing.longitude
-          );
-          return distance <= 10; // within 10 km radius
-        }
-        return false;
-      });
-
-      setPlayerListings(nearbyListings);
-    } else {
-      setPlayerListings(listings);
-    }
-  });
   const sendJoinRequest = async (listing: any) => {
     try {
       const currentUser = auth.currentUser;
@@ -390,7 +384,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   teamButton: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: "#007AFF",
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 4,
@@ -470,7 +464,7 @@ const styles = StyleSheet.create({
   },
 
   iconButton: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: "#007AFF",
     paddingVertical: 14,
     paddingHorizontal: 12,
     borderRadius: 4,

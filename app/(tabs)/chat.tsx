@@ -10,7 +10,13 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { FlatList, Pressable, View } from "react-native";
+import {
+  FlatList,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import { useState, useEffect } from "react";
 import { Text, Button } from "react-native-paper";
 import { FontAwesome } from "@expo/vector-icons";
@@ -25,14 +31,12 @@ export default function ChatList() {
   useEffect(() => {
     if (!currentUser) return;
 
-    // conversations user is part of
     const q = query(
       collection(db, "conversations"),
       or(
         where("u1._id", "==", currentUser?.uid),
         where("u2._id", "==", currentUser?.uid)
       )
-      // orderBy("updatedAt", "desc") //query requires indexes
     );
 
     const unsubscribe = onSnapshot(q, (snap) => {
@@ -44,113 +48,131 @@ export default function ChatList() {
     return () => unsubscribe();
   }, []);
 
-  // navigate to chat creation screen
   const createChat = () => router.push("/chatFolder/chatSearch");
 
-  return (
-    <SafeAreaView style={{ flex: 1, paddingTop: top }}>
-      <View style={{ alignItems: "flex-end" }}>
-        <Pressable
-          onPress={createChat}
-          style={{
-            flexDirection: "row",
-            padding: 10,
-          }}
-        >
-          <FontAwesome name="pencil-square-o" size={26} color={"black"} />
-        </Pressable>
-      </View>
-      <Text
-        variant="headlineLarge"
-        style={{ fontWeight: "bold", marginLeft: 10 }}
+  const renderConversation = ({ item }: { item: any }) => {
+    const oppositeUser =
+      item.u1._id === currentUser?.uid ? item.u2 : item.u1;
+    const lastMessage = item.messages[item.messages.length - 1];
+
+    return (
+      <TouchableOpacity
+        onPress={() =>
+          router.navigate({
+            pathname: "/chatFolder/[id]",
+            params: {
+              id: oppositeUser._id,
+              email: oppositeUser.email,
+            },
+          })
+        }
+        style={styles.chatCard}
       >
+        <View style={styles.chatHeader}>
+          <Text variant="titleMedium" style={styles.chatName} numberOfLines={1}>
+            {oppositeUser.email}
+          </Text>
+          <Text style={styles.chatDate}>
+            {new Date(lastMessage.createdAt).toLocaleDateString()}
+          </Text>
+        </View>
+        <Text style={styles.chatMessage} numberOfLines={2} ellipsizeMode="tail">
+          {lastMessage.text}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text variant="headlineMedium" style={styles.headerText}>
         Messages
       </Text>
-      
+
       {conversations.length > 0 ? (
-        // Checks if user has conversations
-        // If so, displays them in a FlatList
-        <View style={{ marginTop: 10, flex: 1 }}>
-          <FlatList
-            keyExtractor={(item: any) => item._id}
-            data={conversations}
-            renderItem={({ item }) => {
-              const oppositeUser =
-                item.u1._id === currentUser?.uid ? item.u2 : item.u1;
-              return (
-                // Takes user to their chat with the opposite user
-                <Pressable
-                  onPress={() =>
-                    router.navigate({
-                      pathname: "/chatFolder/[id]",
-                      params: {
-                        id: oppositeUser._id,
-                        email: oppositeUser.email,
-                      },
-                    })
-                  }
-                  style={{
-                    paddingVertical: 5,
-                    paddingHorizontal: 10,
-                    borderTopColor: "gray",
-                    borderBottomColor: "gray",
-                    borderBottomWidth: 1,
-                    borderTopWidth: 1,
-                    height: 100,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Text
-                    // Displays the email of the opposite user
-                    // Date of the last message
-                    // and the last message text
-                      ellipsizeMode="tail"
-                      variant="titleLarge"
-                      style={{ fontWeight: "bold" }}
-                    >
-                      {oppositeUser.email}
-                    </Text>
-                    <Text variant="titleMedium">
-                      {new Date(
-                        item.messages[item.messages.length - 1].createdAt
-                      ).toLocaleDateString()}
-                    </Text>
-                  </View>
-                  <Text
-                    variant="bodySmall"
-                    style={{ paddingTop: 10 }}
-                    numberOfLines={2}
-                    ellipsizeMode="tail"
-                  >
-                    {item.messages[item.messages.length - 1].text}
-                  </Text>
-                </Pressable>
-              );
-            }}
-          />
-        </View>
+        <FlatList
+          data={conversations}
+          keyExtractor={(item: any) => item._id}
+          renderItem={renderConversation}
+          contentContainerStyle={{ paddingBottom: 80 }}
+        />
       ) : (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text
-            // If user has no texts, displays a message and button to create a chat
-            variant="titleMedium"
-            style={{ fontWeight: "bold", paddingBottom: 20 }}
-          >
+        <View style={styles.emptyState}>
+          <Text variant="titleMedium" style={styles.emptyText}>
             You have no messages
           </Text>
           <Button mode="elevated" onPress={createChat}>
-            Send Message
+            Start a Conversation
           </Button>
         </View>
       )}
+
+      {/* Floating Action Button */}
+      <TouchableOpacity style={styles.fab} onPress={createChat}>
+        <FontAwesome name="pencil-square-o" size={28} color="#fff" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  headerText: {
+    fontWeight: "bold",
+    marginVertical: 12,
+    marginLeft: 4,
+  },
+  chatCard: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  chatHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  chatName: {
+    fontWeight: "bold",
+    maxWidth: "70%",
+  },
+  chatDate: {
+    fontSize: 12,
+    color: "#888",
+  },
+  chatMessage: {
+    marginTop: 6,
+    color: "#333",
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontWeight: "bold",
+    marginBottom: 16,
+  },
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    backgroundColor: "#007AFF",
+    padding: 16,
+    borderRadius: 32,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
+  },
+});

@@ -7,14 +7,6 @@ export default function userId() {
                 headerShown: false,
             }}
         >
-            <Stack.Screen
-                name="[id]"
-                options={{
-                    headerShown: true,
-                title: '',
-                headerBackTitle: 'Back',
-                }}
-            />
         </Stack>
 
     );
