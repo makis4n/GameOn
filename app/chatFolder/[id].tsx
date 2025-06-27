@@ -1,18 +1,11 @@
-import { Pressable, View, KeyboardAvoidingView } from "react-native";
-import { useEffect, useState } from "react";
-import { GiftedChat, IMessage } from "react-native-gifted-chat";
-import { Text } from "react-native-paper";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { auth, db } from "@/Firebase-config";
+import { FontAwesome } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   and,
   arrayUnion,
   collection,
   doc,
-  getFirestore,
   onSnapshot,
   or,
   query,
@@ -20,8 +13,14 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { FontAwesome } from "@expo/vector-icons";
-import { auth, db } from "@/Firebase-config";
+import { useEffect, useState } from "react";
+import { KeyboardAvoidingView, Pressable, View } from "react-native";
+import { GiftedChat, IMessage } from "react-native-gifted-chat";
+import { Text } from "react-native-paper";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 export default function ChatMessageScreen() {
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -151,5 +150,4 @@ export default function ChatMessageScreen() {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
-
 }

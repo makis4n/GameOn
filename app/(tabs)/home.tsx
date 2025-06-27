@@ -4,6 +4,7 @@ import {
   requestCalendarPermissions,
 } from "@/hooks/addToCalendar";
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
 import { router } from "expo-router";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
@@ -30,9 +31,26 @@ const Home = () => {
   const [gamesHappening, setGamesHappening] = useState<any[]>([]);
   const [playerListings, setPlayerListings] = useState<any[]>([]);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   useEffect(() => {
     const authInstance = getAuth();
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        alert("Permission to access location was denied");
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      setUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
 
     let unsubNotif: () => void = () => {};
     let unsubListing: () => void = () => {};
@@ -109,6 +127,49 @@ const Home = () => {
     };
   }, []);
 
+  function getDistanceFromLatLonInKm(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ) {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+  }
+  unsubPlayerListings = onSnapshot(playerListingsQuery, (snapshot) => {
+    const listings = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    if (userLocation) {
+      const nearbyListings = listings.filter((listing: any) => {
+        if (listing.latitude && listing.longitude) {
+          const distance = getDistanceFromLatLonInKm(
+            userLocation.latitude,
+            userLocation.longitude,
+            listing.latitude,
+            listing.longitude
+          );
+          return distance <= 10; // within 10 km radius
+        }
+        return false;
+      });
+
+      setPlayerListings(nearbyListings);
+    } else {
+      setPlayerListings(listings);
+    }
+  });
   const sendJoinRequest = async (listing: any) => {
     try {
       const currentUser = auth.currentUser;
@@ -176,7 +237,6 @@ const Home = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-<<<<<<< HEAD
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <View style={styles.topRow}>
           <TouchableOpacity
@@ -190,30 +250,6 @@ const Home = () => {
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => router.push("/homeFolder/weatherforecast")}
-=======
-      <View style={styles.rowButtons}>
-        <TouchableOpacity
-          style={styles.teamButton}
-          onPress={() => router.push("/homeFolder/teamPage")}
-        >
-          <Text style={styles.teamText}>Team</Text>
-        </TouchableOpacity>
-        <View style={{ padding: 16 }}>
-          <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 8,}}>
-            Upcoming Games
-          </Text>
-          {upcomingGame ? (
-            <View
-              style={{
-                backgroundColor: "#fff",
-                padding: 12,
-                borderRadius: 8,
-                shadowColor: "#ccc",
-                shadowOpacity: 0.3,
-                shadowOffset: { width: 0, height: 2 },
-                shadowRadius: 4,
-              }}
->>>>>>> 64f28bea5e66dea3b400468e4f6a71a2f28fb3b0
             >
               <Ionicons name="cloud-outline" size={24} color="#fff" />
             </TouchableOpacity>
@@ -274,11 +310,7 @@ const Home = () => {
               </TouchableOpacity>
             </View>
           ) : (
-<<<<<<< HEAD
             <Text style={styles.emptyText}>No upcoming game</Text>
-=======
-            <Text style={{ color: "#999", textAlign: "center" }}>No Upcoming Games</Text>
->>>>>>> 64f28bea5e66dea3b400468e4f6a71a2f28fb3b0
           )}
         </View>
 

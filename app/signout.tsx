@@ -10,15 +10,14 @@ export default function SignOutScreen() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user && hasSignedOut) {
-        router.replace("/login");
+        router.replace("/");
       }
+    });
     return unsubscribe;
   }, [hasSignedOut]);
 
   const handleSignOut = async () => {
     try {
-      // No need to track unsubscribe here if handled properly in pages
-
       setHasSignedOut(true);
       await auth.signOut();
     } catch (error) {

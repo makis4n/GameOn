@@ -11,7 +11,7 @@ export default function RootLayout() {
       if (user) {
         router.replace("/(tabs)/home");
       } else {
-        router.replace("/(auth)/login");
+        router.replace("/");
       }
     });
 
@@ -20,47 +20,40 @@ export default function RootLayout() {
 
   return (
     <Stack>
-      <Stack.Screen 
-        name="index" 
+      <Stack.Screen
+        name="index"
         options={{
-          headerShown: false 
-        }} 
-      />
-      <Stack.Screen 
-        name="(tabs)" 
-        options={{
-          headerShown: true,
-          title: '',
-          headerBackTitle: 'Back',
+          headerShown: false,
         }}
       />
       <Stack.Screen
-        name="modal" 
-        options={{ 
-          presentation: 'modal' 
-        }} 
+        name="(tabs)"
+        options={{
+          headerShown: true,
+          title: "",
+          headerBackTitle: "Back",
+        }}
+      />
+      <Stack.Screen
+        name="modal"
+        options={{
+          presentation: "modal",
+        }}
       />
       <Stack.Screen
         name="signout"
         options={{
-          presentation: 'modal',
+          presentation: "modal",
         }}
       />
       <Stack.Screen
         name="homeFolder"
         options={{
           headerShown: true,
-          title: '',
-          headerBackTitle: 'Back',
+          title: "",
+          headerBackTitle: "Back",
         }}
       />
-      <Stack.Screen
-        name="modal" 
-        options={{ 
-          presentation: 'modal' 
-        }} 
-      />
-
     </Stack>
   );
 }

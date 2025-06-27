@@ -33,10 +33,6 @@ const createAccount = () => {
       alert(
         "Verification email sent. Please verify your email before logging in."
       );
-<<<<<<< HEAD:app/(auth)/createAccount.tsx
-=======
-      router.replace("/");
->>>>>>> 64f28bea5e66dea3b400468e4f6a71a2f28fb3b0:app/createAccount.tsx
     } catch (error: any) {
       console.log(error);
       alert("Sign up failed: " + error.message);
