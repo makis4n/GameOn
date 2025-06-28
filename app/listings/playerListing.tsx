@@ -115,9 +115,9 @@ export default function PlayerListing() {
 
       <Text style={styles.label}>Team Name</Text>
       <Text style={styles.value}>{teamName}</Text>
-      <View style={{ zIndex: 1, flex: 0.5 }}>
+      <View style={{ zIndex: 1, marginBottom: 8 }}>
         <GooglePlacesAutocomplete
-          placeholder="Search"
+          placeholder="Location"
           onPress={(data, details = null) => {
             const selectedLocation =
               details?.formatted_address ?? data.description ?? "";

@@ -19,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 export default function GameListing() {
@@ -149,13 +150,45 @@ export default function GameListing() {
           onChangeText={setTask}
           style={styles.input}
         />
-        <TextInput
-          placeholder="Location"
-          placeholderTextColor="#aaa"
-          value={location}
-          onChangeText={setLocation}
-          style={styles.input}
-        />
+        <View style={{ zIndex: 1, flex: 0.5 }}>
+          <GooglePlacesAutocomplete
+            placeholder="Location"
+            onPress={(data, details = null) => {
+              const selectedLocation =
+                details?.formatted_address ?? data.description ?? "";
+              setLocation(selectedLocation);
+            }}
+            fetchDetails={true}
+            predefinedPlaces={[]}
+            textInputProps={{}}
+            minLength={0}
+            query={{
+              key: "AIzaSyAWnKeb325HTl4yMkLwdbzC8EkbOZK1JQg",
+              language: "en",
+              components: "country:sg",
+            }}
+            onFail={(error) => console.log(error)}
+            styles={{
+              container: { flex: 0 },
+              textInput: {
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                padding: 10,
+                color: "#555",
+              },
+              listView: {
+                maxHeight: 250,
+                zIndex: 100,
+              },
+            }}
+          />
+          {location ? (
+            <Text style={{ marginTop: 8, color: "#666" }}>
+              Selected: {location}
+            </Text>
+          ) : null}
+        </View>
         <TextInput
           placeholder="Opponent Team (Optional)"
           placeholderTextColor="#aaa"

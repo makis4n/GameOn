@@ -25,32 +25,62 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+const getDistanceFromLatLonInKm = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 const Home = () => {
   const [upcomingGame, setUpcomingGame] = useState<any | null>(null);
   const [gamesHappening, setGamesHappening] = useState<any[]>([]);
   const [playerListings, setPlayerListings] = useState<any[]>([]);
   const [notificationCount, setNotificationCount] = useState(0);
-  const [userLocation, setUserLocation] = useState<{
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+
+  type Coordinates = {
     latitude: number;
     longitude: number;
-  } | null>(null);
+  };
+
+  interface PlayerListing {
+    id: string;
+    latitude?: number;
+    longitude?: number;
+
+    teamName?: string;
+    description?: string;
+    positions?: string[];
+    dateTime?: string;
+    createdBy?: string;
+    status?: string;
+  }
 
   useEffect(() => {
-    const authInstance = getAuth();
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        alert("Permission to access location was denied");
-        return;
+      if (status === "granted") {
+        const location = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
       }
-
-      const location = await Location.getCurrentPositionAsync({});
-      setUserLocation({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
     })();
+    const authInstance = getAuth();
 
     let unsubNotif: () => void = () => {};
     let unsubListing: () => void = () => {};
@@ -111,11 +141,32 @@ const Home = () => {
         where("status", "==", "open")
       );
       unsubPlayerListings = onSnapshot(playerListingsQuery, (snapshot) => {
-        const listings = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setPlayerListings(listings);
+        const listings = snapshot.docs.map((doc) => {
+          const data = doc.data() as PlayerListing & { id?: string };
+          const { id: _ignoreId, ...rest } = data; // remove inner id
+          return {
+            id: doc.id,
+            ...rest,
+          };
+        });
+
+        if (userLocation) {
+          const nearbyListings = listings.filter((listing) => {
+            if (listing.latitude && listing.longitude) {
+              const distance = getDistanceFromLatLonInKm(
+                userLocation.latitude,
+                userLocation.longitude,
+                listing.latitude,
+                listing.longitude
+              );
+              return distance <= 10; // within 10 km radius
+            }
+            return false;
+          });
+          setPlayerListings(nearbyListings);
+        } else {
+          setPlayerListings(listings);
+        }
       });
     });
 
@@ -127,49 +178,6 @@ const Home = () => {
     };
   }, []);
 
-  function getDistanceFromLatLonInKm(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ) {
-    const R = 6371; // Radius of the earth in km
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) *
-        Math.cos(lat2 * (Math.PI / 180)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
-  }
-  unsubPlayerListings = onSnapshot(playerListingsQuery, (snapshot) => {
-    const listings = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    if (userLocation) {
-      const nearbyListings = listings.filter((listing: any) => {
-        if (listing.latitude && listing.longitude) {
-          const distance = getDistanceFromLatLonInKm(
-            userLocation.latitude,
-            userLocation.longitude,
-            listing.latitude,
-            listing.longitude
-          );
-          return distance <= 10; // within 10 km radius
-        }
-        return false;
-      });
-
-      setPlayerListings(nearbyListings);
-    } else {
-      setPlayerListings(listings);
-    }
-  });
   const sendJoinRequest = async (listing: any) => {
     try {
       const currentUser = auth.currentUser;
