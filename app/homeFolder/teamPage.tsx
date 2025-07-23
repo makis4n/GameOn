@@ -201,7 +201,7 @@ export default function TeamPage() {
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#FF9500" }]}
+          style={[styles.button, { backgroundColor: "#FF3B30" }]}
           onPress={leaveTeam}
         >
           <Text style={styles.buttonText}>Leave Team</Text>

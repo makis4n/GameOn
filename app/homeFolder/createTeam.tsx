@@ -106,7 +106,7 @@ export default function TeamPage() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#34C759" }]}
+        style={[styles.button]}
         onPress={joinTeam}
       >
         <Text style={styles.buttonText}>Join Team</Text>

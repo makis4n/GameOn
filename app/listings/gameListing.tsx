@@ -218,7 +218,11 @@ export default function GameListing() {
           value={opponentSearch}
           onChangeText={(text) => {
             setOpponentSearch(text);
-            searchTeamByName(text);
+            if (text.trim() === "") {
+              setSearchResults([]);
+            } else {
+              searchTeamByName(text);
+            }
           }}
           style={styles.input}
         />

@@ -22,6 +22,7 @@ const CreateProfile = () => {
     { label: "Defender", value: "Defender" },
     { label: "Goalkeeper", value: "Goalkeeper" },
   ]);
+  const user = auth.currentUser;
 
   const [username, setUsername] = useState("");
   const [age, setAge] = useState("");
@@ -33,7 +34,10 @@ const CreateProfile = () => {
     }
 
     try {
-      const userId = auth.currentUser?.uid;
+      if (!user) {
+        return;
+      }
+      const userId = user.uid;
       if (!userId) {
         alert("User not authenticated.");
         return;
@@ -43,6 +47,7 @@ const CreateProfile = () => {
         username,
         age: parseInt(age),
         position,
+        email: user.email
       });
 
       alert("Profile created successfully!");

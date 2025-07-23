@@ -167,7 +167,9 @@ export default function PlayerListing() {
           }}
           fetchDetails={true}
           predefinedPlaces={[]}
-          textInputProps={{}}
+          textInputProps={{
+            placeholderTextColor: 'gray'
+          }}
           minLength={0}
           query={{
             key: "AIzaSyAWnKeb325HTl4yMkLwdbzC8EkbOZK1JQg",
@@ -202,7 +204,6 @@ export default function PlayerListing() {
         placeholder="Describe your team or what you're looking for..."
         value={description}
         onChangeText={setDescription}
-        multiline
       />
 
       <Text style={styles.label}>Positions Needed</Text>

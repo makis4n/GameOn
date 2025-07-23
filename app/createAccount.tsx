@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from 'expo-router';
 
 const createAccount = () => {
   const [email, setEmail] = useState("");
@@ -33,6 +34,7 @@ const createAccount = () => {
       alert(
         "Verification email sent. Please verify your email before logging in."
       );
+      router.push('/');
     } catch (error: any) {
       console.log(error);
       alert("Sign up failed: " + error.message);
