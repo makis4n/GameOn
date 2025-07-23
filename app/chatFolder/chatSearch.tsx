@@ -1,15 +1,8 @@
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { auth, db } from "@/Firebase-config";
+import { FontAwesome } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { TextInput, Text } from "react-native-paper";
 import {
   FlatList,
   Keyboard,
@@ -17,39 +10,42 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { router } from "expo-router";
-import { FontAwesome } from "@expo/vector-icons";
-import { auth, db } from "@/Firebase-config";
+import { Text, TextInput } from "react-native-paper";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 export default function SearchScreen() {
   const { top } = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<any[]>([]);
 
-  // Function to fetch search results based on the input text
-  // It queries the "users" collection in Firestore for emails that match the input text
   const getSearchResults = async (text: string) => {
     text = text.toLowerCase();
 
     const usersRef = collection(db, "users");
     const q = query(
       usersRef,
-      where("email", ">=", text),
-      where("email", "<=", text + "\uf8ff"),
-      where("email", "!=", auth.currentUser?.email)
+      where("username", ">=", text),
+      where("username", "<=", text + "\uf8ff"),
+      where(
+        "username",
+        "!=",
+        auth.currentUser?.displayName?.toLowerCase() ?? ""
+      )
     );
+
     const res = await getDocs(q);
     if (res) {
       let users: any[] = [];
-      res.docs.forEach((doc) => users.push(doc.data()));
+      res.docs.forEach((doc) => users.push({ _id: doc.id, ...doc.data() }));
       return users;
     }
 
     return [];
   };
 
-  // Fetch users when the component mounts or when searchQuery changes
-  // This will update the users state with the results from getSearchResults
   useEffect(() => {
     async function fetchUsers() {
       setUsers(await getSearchResults(searchQuery));
@@ -58,7 +54,6 @@ export default function SearchScreen() {
     fetchUsers();
   }, [searchQuery]);
 
-  // Handle form submission when the user presses the search button
   const handleSubmit = async (text: string) => {
     setUsers(await getSearchResults(text));
   };
@@ -135,13 +130,13 @@ export default function SearchScreen() {
                         pathname: "/chatFolder/[id]",
                         params: {
                           id: item._id,
-                          email: item.email,
+                          email: item.username,
                         },
                       })
                     }
                   >
                     <Text variant="titleLarge" style={{ fontWeight: "bold" }}>
-                      {item.email}
+                      {item.username}
                     </Text>
                   </Pressable>
                 )}
@@ -156,7 +151,7 @@ export default function SearchScreen() {
               }}
             >
               <Text variant="titleLarge" style={{ fontWeight: "bold" }}>
-                Search Users by Email
+                Search Users by Username
               </Text>
             </View>
           )}

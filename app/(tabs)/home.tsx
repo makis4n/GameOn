@@ -3,8 +3,11 @@ import {
   createCalendarEvent,
   requestCalendarPermissions,
 } from "@/hooks/addToCalendar";
+import { sendPushNotification } from "@/utils/sendPushNotification";
 import { Ionicons } from "@expo/vector-icons";
+import * as Device from "expo-device";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
@@ -14,10 +17,13 @@ import {
   getDoc,
   onSnapshot,
   query,
+  setDoc,
   where,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -25,6 +31,50 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const promptForScore = (game: any) => {
+  let inputScore = "";
+
+  Alert.prompt?.(
+    "Enter Final Score",
+    `${game.teamName} vs ${game.teamNameInvited}`,
+    [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Submit",
+        onPress: async (text) => {
+          if (!text || text.trim() === "") {
+            alert("Score cannot be empty.");
+            return;
+          }
+
+          try {
+            await setDoc(
+              doc(db, "listings", game.id),
+              {
+                score: text.trim(),
+                status: "completed",
+              },
+              { merge: true }
+            );
+            alert("Score submitted!");
+          } catch (err) {
+            console.error("Failed to submit score:", err);
+            alert("Failed to submit score.");
+          }
+        },
+      },
+    ],
+    "plain-text"
+  );
+
+  if (!Alert.prompt) {
+    alert("Score submission not supported on this device.");
+  }
+};
 const getDistanceFromLatLonInKm = (
   lat1: number,
   lon1: number,
@@ -50,6 +100,9 @@ const Home = () => {
   const [playerListings, setPlayerListings] = useState<any[]>([]);
   const [notificationCount, setNotificationCount] = useState(0);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [pastGamesRequiringScore, setPastGamesRequiringScore] = useState<any[]>(
+    []
+  );
 
   type Coordinates = {
     latitude: number;
@@ -70,6 +123,50 @@ const Home = () => {
   }
 
   useEffect(() => {
+    const registerForPushNotificationsAsync = async () => {
+      if (Device.isDevice) {
+        const { status: existingStatus } =
+          await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+
+        if (existingStatus !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+
+        if (finalStatus !== "granted") {
+          console.log("Failed to get push token");
+          return;
+        }
+
+        const token = (await Notifications.getExpoPushTokenAsync()).data;
+        console.log("Expo Push Token:", token);
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          await setDoc(
+            doc(db, "users", currentUser.uid),
+            {
+              expoPushToken: token,
+            },
+            { merge: true }
+          );
+        }
+      } else {
+        alert("Must use physical device for Push Notifications");
+      }
+
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#FF231F7C",
+        });
+      }
+    };
+
+    registerForPushNotificationsAsync();
+
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted") {
@@ -115,6 +212,12 @@ const Home = () => {
       unsubListing = onSnapshot(listingQuery, (snapshot) => {
         const now = new Date();
 
+        const pastAccepted = snapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((listing: any) => listing.status === "awaiting_score");
+
+        setPastGamesRequiringScore(pastAccepted);
+
         const allListings = snapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
           .filter((listing: any) => new Date(listing.dateTime) > now);
@@ -143,7 +246,7 @@ const Home = () => {
       unsubPlayerListings = onSnapshot(playerListingsQuery, (snapshot) => {
         const listings = snapshot.docs.map((doc) => {
           const data = doc.data() as PlayerListing & { id?: string };
-          const { id: _ignoreId, ...rest } = data; // remove inner id
+          const { id: _ignoreId, ...rest } = data;
           return {
             id: doc.id,
             ...rest,
@@ -151,7 +254,7 @@ const Home = () => {
         });
 
         if (userLocation) {
-          const nearbyListings = listings.filter((listing) => {
+          const listingsWithDistance = listings.map((listing) => {
             if (listing.latitude && listing.longitude) {
               const distance = getDistanceFromLatLonInKm(
                 userLocation.latitude,
@@ -159,11 +262,21 @@ const Home = () => {
                 listing.latitude,
                 listing.longitude
               );
-              return distance <= 10; // within 10 km radius
+              return {
+                ...listing,
+                distance,
+              };
+            } else {
+              return {
+                ...listing,
+                distance: Number.MAX_VALUE,
+              };
             }
-            return false;
           });
-          setPlayerListings(nearbyListings);
+
+          listingsWithDistance.sort((a, b) => a.distance - b.distance);
+
+          setPlayerListings(listingsWithDistance);
         } else {
           setPlayerListings(listings);
         }
@@ -205,6 +318,19 @@ const Home = () => {
         status: "pending",
         read: false,
       });
+      const recipientDoc = await getDoc(doc(db, "users", listing.userId));
+      const expoPushToken = recipientDoc.exists()
+        ? recipientDoc.data().expoPushToken
+        : null;
+
+      if (expoPushToken) {
+        await sendPushNotification(
+          expoPushToken,
+          "New Join Request",
+          `${senderTeamName} wants to join your game.`,
+          { screen: "notifications" }
+        );
+      }
 
       alert("Request sent!");
     } catch (error) {
@@ -235,6 +361,16 @@ const Home = () => {
         status: "pending",
         read: false,
       });
+      const recipientDoc = await getDoc(doc(db, "users", listing.userId));
+      const expoPushToken = recipientDoc.exists()
+        ? recipientDoc.data().expoPushToken
+        : null;
+      await sendPushNotification(
+        expoPushToken,
+        "New Join Request",
+        `${senderName} wants to join your player listing for ${listing.teamName}.`,
+        { screen: "notifications" }
+      );
 
       alert("Request sent!");
     } catch (error) {
@@ -279,6 +415,29 @@ const Home = () => {
         </View>
 
         <View style={styles.sectionContainer}>
+          {pastGamesRequiringScore.length > 0 && (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Submit Scores</Text>
+              {pastGamesRequiringScore.map((game) => (
+                <View key={game.id} style={styles.card}>
+                  <Text style={styles.cardTitle}>
+                    {game.teamName} vs {game.teamNameInvited}
+                  </Text>
+                  <Text style={styles.cardSub}>
+                    Date: {new Date(game.dateTime).toLocaleString()}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={styles.requestButton}
+                    onPress={() => promptForScore(game)}
+                  >
+                    <Text style={styles.requestButtonText}>Submit Score</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+
           <Text style={styles.sectionTitle}>Upcoming Game</Text>
           {upcomingGame ? (
             <View style={styles.card}>
@@ -398,7 +557,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   teamButton: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: "#007AFF",
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 4,

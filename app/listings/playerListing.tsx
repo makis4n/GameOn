@@ -1,9 +1,22 @@
 import { auth, db } from "@/Firebase-config";
+import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
-import { addDoc, collection, doc, getDoc } from "firebase/firestore";
+import { router } from "expo-router";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { SetStateAction, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  FlatList,
   StyleSheet,
   Text,
   TextInput,
@@ -23,8 +36,32 @@ export default function PlayerListing() {
   const [loading, setLoading] = useState(true);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [dateTime, setDateTime] = useState(new Date());
+  const [myListings, setMyListings] = useState<any[]>([]);
 
   useEffect(() => {
+    const fetchMyListings = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const q = query(
+        collection(db, "player_listings"),
+        where("createdBy", "==", user.uid)
+      );
+      const snapshot = await getDocs(q);
+      const now = new Date();
+
+      const upcoming = [];
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+        const gameTime = new Date(data.dateTime);
+        if (gameTime <= now) {
+          await deleteDoc(doc(db, "player_listings", docSnap.id)); // Clean up old listings
+        } else {
+          upcoming.push({ id: docSnap.id, ...data });
+        }
+      }
+      setMyListings(upcoming);
+    };
     const fetchTeam = async () => {
       const user = auth.currentUser;
       if (!user) return;
@@ -39,6 +76,7 @@ export default function PlayerListing() {
       setLoading(false);
     };
 
+    fetchMyListings();
     fetchTeam();
   }, []);
 
@@ -103,14 +141,18 @@ export default function PlayerListing() {
   };
 
   if (loading)
-    return (
-      <SafeAreaView>
-        <Text>Loading...</Text>
-      </SafeAreaView>
-    );
+    return <ActivityIndicator size="small" style={{ marginVertical: 10 }} />;
 
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={styles.backButton}
+        activeOpacity={0.6}
+      >
+        <FontAwesome name="chevron-left" size={24} color="black" />
+      </TouchableOpacity>
+
       <Text style={styles.title}>Create Player Listing</Text>
 
       <Text style={styles.label}>Team Name</Text>
@@ -137,7 +179,7 @@ export default function PlayerListing() {
             container: { flex: 0 },
             textInput: {
               borderWidth: 1,
-              borderColor: "#ccc",
+              borderColor: "#gray",
               borderRadius: 8,
               padding: 10,
               color: "#555",
@@ -187,14 +229,57 @@ export default function PlayerListing() {
         onConfirm={handleConfirm}
         onCancel={hideDatePicker}
       />
+      <FlatList
+        data={myListings}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.todoContainer}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.taskText}>Location: {item.location}</Text>
+              <Text style={styles.dateText}>
+                Game Time: {new Date(item.dateTime).toLocaleString()}
+              </Text>
+              <Text style={styles.dateText}>
+                Description: {item.description}
+              </Text>
+              <Text style={styles.dateText}>
+                Positions: {item.positions?.join(", ")}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={async () => {
+                await deleteDoc(doc(db, "player_listings", item.id));
+                setMyListings((prev) => prev.filter((l) => l.id !== item.id));
+              }}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: "#fff" },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 24 },
-  label: { fontWeight: "600", marginTop: 12 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+    justifyContent: "center",
+    alignContent: "center",
+    marginTop: -80,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 20,
+    marginTop: -30,
+    textAlign: "center",
+    color: "#333",
+  },
+  label: { fontWeight: "600" },
   value: { marginBottom: 12, color: "#333" },
   input: {
     borderWidth: 1,
@@ -219,5 +304,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#555",
     textAlign: "center",
+  },
+  backButton: {
+    padding: 10,
+    alignSelf: "flex-start",
+    marginBottom: 10,
+    paddingLeft: -10,
+  },
+
+  todoContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 5,
+    shadowColor: "#ccc",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  taskText: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 4,
   },
 });

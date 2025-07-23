@@ -7,14 +7,6 @@ export default function teamId() {
                 headerShown: false,
             }}
         >
-            <Stack.Screen
-                name="[id]"
-                options={{
-                    headerShown: true,
-                title: '',
-                headerBackTitle: 'Back',
-                }}
-            />
         </Stack>
 
     );

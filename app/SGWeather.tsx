@@ -38,17 +38,8 @@ export default function SGWeather() {
   }
 
   return (
-    <View style={{ paddingVertical: 10 }}>
-      <Text
-        style={{
-          fontSize: 18,
-          fontWeight: "bold",
-          marginBottom: 6,
-          textAlign: "center",
-        }}
-      >
-        Singapore 2-Hour Weather Forecast
-      </Text>
+    <View>
+
       {forecasts.map(({ area, forecast }) => (
         <View
           key={area}

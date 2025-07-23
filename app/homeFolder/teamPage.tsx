@@ -186,6 +186,12 @@ export default function TeamPage() {
           </Text>
         ))}
       </View>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#007AFF" }]}
+        onPress={() => router.push("/teamActivity/activities")}
+      >
+        <Text style={styles.buttonText}>View Match History</Text>
+      </TouchableOpacity>
       {isCreator ? (
         <TouchableOpacity
           style={[styles.button, { backgroundColor: "#FF3B30" }]}

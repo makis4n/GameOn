@@ -1,4 +1,5 @@
 import { auth, db } from "@/Firebase-config";
+import { sendPushNotification } from "@/utils/sendPushNotification";
 import {
   collection,
   deleteDoc,
@@ -52,11 +53,18 @@ export default function NotificationsPage() {
         read: true,
       });
 
+      let responseMessage = "";
+
       if (response === "accepted" && notif.listingId) {
         await updateDoc(doc(db, "listings", notif.listingId), {
           status: "accepted",
+          teamNameInvited: notif.teamNameInvited || "Opponent Team",
           read: true,
         });
+
+        responseMessage = `Your match request was accepted by ${
+          notif.teamNameInvited || "a team"
+        }`;
       }
 
       if (response === "accepted" && notif.teamId) {
@@ -77,7 +85,38 @@ export default function NotificationsPage() {
           await updateDoc(teamDocRef, {
             members: updatedMembers,
           });
+
+          responseMessage = `Your request to join ${teamData.name} was accepted!`;
         }
+      }
+
+      if (response === "rejected") {
+        responseMessage = notif.listingId
+          ? "Your match request was rejected."
+          : "Your request to join the team was rejected.";
+      }
+
+      if (notif.fromPushToken && responseMessage) {
+        await sendPushNotification(
+          notif.fromPushToken,
+          "Request Update",
+          responseMessage
+        );
+      }
+
+      if (responseMessage) {
+        // Create an in-app notification for the requester
+        await addDoc(collection(db, "notifications"), {
+          to: notif.from, // UID of the requester
+          from: auth.currentUser?.uid,
+          title: "Request Update",
+          message: responseMessage,
+          timestamp: Date.now(),
+          type: "response",
+          relatedNotificationId: notif.id,
+          read: false,
+          status: response,
+        });
       }
 
       fetchNotifications();

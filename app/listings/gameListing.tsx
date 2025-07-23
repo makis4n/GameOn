@@ -1,4 +1,6 @@
 import { db } from "@/Firebase-config";
+import { FontAwesome } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { getAuth } from "firebase/auth";
 import {
   addDoc,
@@ -7,6 +9,7 @@ import {
   doc,
   getDocs,
   query,
+  setDoc,
   where,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
@@ -60,7 +63,15 @@ export default function GameListing() {
       const docData = docSnap.data();
       const listingDate = new Date(docData.dateTime);
 
-      if (listingDate <= now) {
+      if (listingDate <= now && !docData.score) {
+        await setDoc(
+          doc(db, "listings", docSnap.id),
+          {
+            status: "awaiting_score",
+          },
+          { merge: true }
+        );
+      } else if (listingDate <= now) {
         await deleteDoc(doc(db, "listings", docSnap.id));
       } else {
         validListings.push({ ...docData, id: docSnap.id });
@@ -142,6 +153,13 @@ export default function GameListing() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          activeOpacity={0.6}
+        >
+          <FontAwesome name="chevron-left" size={24} color="black" />
+        </TouchableOpacity>
         <Text style={styles.mainTitle}>Create Game Listing</Text>
         <TextInput
           placeholder="Game Title"
@@ -150,7 +168,7 @@ export default function GameListing() {
           onChangeText={setTask}
           style={styles.input}
         />
-        <View style={{ zIndex: 1, flex: 0.5 }}>
+        <View style={{ zIndex: 999, position: "relative" }}>
           <GooglePlacesAutocomplete
             placeholder="Location"
             onPress={(data, details = null) => {
@@ -160,7 +178,9 @@ export default function GameListing() {
             }}
             fetchDetails={true}
             predefinedPlaces={[]}
-            textInputProps={{}}
+            textInputProps={{
+              placeholderTextColor: "#aaa",
+            }}
             minLength={0}
             query={{
               key: "AIzaSyAWnKeb325HTl4yMkLwdbzC8EkbOZK1JQg",
@@ -169,13 +189,16 @@ export default function GameListing() {
             }}
             onFail={(error) => console.log(error)}
             styles={{
-              container: { flex: 0 },
+              container: { flex: 0, zIndex: 999 },
               textInput: {
+                height: 50,
+                borderColor: "gray",
                 borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 8,
-                padding: 10,
-                color: "#555",
+                borderRadius: 10,
+                paddingHorizontal: 5,
+                marginRight: 10,
+                backgroundColor: "white",
+                marginBottom: 10,
               },
               listView: {
                 maxHeight: 250,
@@ -238,7 +261,7 @@ export default function GameListing() {
         </Text>
 
         <TouchableOpacity style={styles.dateButton} onPress={addListing}>
-          <Text style={styles.buttonText}>Create</Text>
+          <Text style={styles.buttonText}>Create Listing</Text>
         </TouchableOpacity>
 
         <FlatList
@@ -246,7 +269,7 @@ export default function GameListing() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.todoContainer}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, alignItems: "flex-start" }}>
                 <Text style={styles.taskText}>{item.task}</Text>
 
                 {item.teamName && (
@@ -293,11 +316,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#f8f9fa",
+    justifyContent: "center",
+    alignContent: "center",
   },
   mainTitle: {
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 20,
+    marginTop: -30,
     textAlign: "center",
     color: "#333",
   },
@@ -314,11 +340,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     marginRight: 10,
     backgroundColor: "white",
+    marginBottom: 10,
   },
   dateButton: {
     padding: 10,
     borderRadius: 10,
-    backgroundColor: "#26A69A",
+    backgroundColor: "#007AFF",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#26A69A",
@@ -370,6 +397,8 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 16,
     color: "#555",
+    marginBottom: 15,
+    textAlign: "left",
   },
   taskText: {
     fontSize: 16,
@@ -381,5 +410,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#444",
     marginTop: 4,
+  },
+  backButton: {
+    padding: 10,
+    alignSelf: "flex-start",
+    marginBottom: 10,
+    paddingLeft: -10,
   },
 });

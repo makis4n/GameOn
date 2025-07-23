@@ -1,4 +1,3 @@
-"@/Firebase-config";
 import { auth } from "@/Firebase-config";
 import { router, Stack } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
@@ -19,15 +18,21 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <Stack>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+      >
       <Stack.Screen
-        name="index"
+        name="createAccount"
         options={{
-          headerShown: false,
+          headerShown: true,
+          title: "",
+          headerBackTitle: "Back",
         }}
       />
       <Stack.Screen
-        name="(tabs)"
+        name="createProfile"
         options={{
           headerShown: true,
           title: "",
@@ -52,6 +57,18 @@ export default function RootLayout() {
           headerShown: true,
           title: "",
           headerBackTitle: "Back",
+        }}
+      />
+      <Stack.Screen
+        name="user"
+        options={{
+          presentation: "modal",
+        }}
+      />
+      <Stack.Screen
+        name="team"
+        options={{
+          presentation: "modal",
         }}
       />
     </Stack>

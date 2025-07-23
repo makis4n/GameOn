@@ -14,7 +14,7 @@ import {
   where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Pressable, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, View } from "react-native";
 import { GiftedChat, IMessage } from "react-native-gifted-chat";
 import { Text } from "react-native-paper";
 import {
@@ -25,13 +25,12 @@ import {
 export default function ChatMessageScreen() {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [conversationId, setConversationId] = useState<string>("");
-  const { bottom, top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const { id, email } = useLocalSearchParams();
   const { currentUser } = auth;
 
   useEffect(() => {
     const q = query(
-      // get the conversation messages if it exists
       collection(db, "conversations"),
       or(
         and(where("u1._id", "==", currentUser?.uid), where("u2._id", "==", id)),
@@ -39,18 +38,16 @@ export default function ChatMessageScreen() {
       )
     );
     const unsubscribe = onSnapshot(q, (snap) => {
-      if (snap?.docs && snap?.docs.length > 0) {
-        if (!conversationId) setConversationId(snap.docs[0].data()._id);
-        setMessages([...snap.docs[0].data().messages]);
+      if (snap?.docs?.length > 0) {
+        const data = snap.docs[0].data();
+        setConversationId(data._id);
+        setMessages(data.messages);
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  // Function to handle sending messages
-  // creates messages or creates a new conversation if it doesn't exist
-  // or append messages to an existing conversation
   const onSend = async (messages: IMessage[]) => {
     const previousMessages = [...messages];
 
@@ -65,16 +62,12 @@ export default function ChatMessageScreen() {
       };
 
       const createdAt = Date.now();
-
       message._id = message._id;
       message.createdAt = createdAt;
 
-      setMessages((previousMessages: IMessage[]) =>
-        GiftedChat.append(previousMessages, [message], false)
-      );
+      setMessages((prev) => GiftedChat.append(prev, [message], false));
 
       if (!conversationId) {
-        // create the conversation
         await setDoc(conversationRef, {
           u1: { _id: currentUser?.uid, email: currentUser?.email },
           u2: { _id: id, email },
@@ -85,7 +78,6 @@ export default function ChatMessageScreen() {
         });
         setConversationId(conversationRef.id);
       } else {
-        // update the conversation
         await updateDoc(conversationRef, {
           updatedAt: createdAt,
           messages: arrayUnion(message),
@@ -98,55 +90,57 @@ export default function ChatMessageScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, paddingTop: top }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={"padding"}
-        keyboardVerticalOffset={80}
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* Header outside the keyboard avoiding view */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          padding: 10,
+          borderBottomWidth: 1,
+          borderBottomColor: "#ccc",
+        }}
       >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginHorizontal: 10,
-          }}
+        <Pressable onPress={() => router.back()}>
+          {({ pressed }) => (
+            <FontAwesome
+              name="chevron-left"
+              size={25}
+              color="black"
+              style={{ opacity: pressed ? 0.5 : 1 }}
+            />
+          )}
+        </Pressable>
+        <Text
+          style={{ marginLeft: 20, fontWeight: "bold" }}
+          variant="titleMedium"
+          numberOfLines={1}
         >
-          <Pressable
-            style={{ paddingLeft: 10, marginRight: 15 }}
-            onPress={() => router.back()}
-          >
-            {({ pressed }) => (
-              <FontAwesome
-                name="chevron-left"
-                size={25}
-                color={"black"}
-                style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-              />
-            )}
-          </Pressable>
+          {email}
+        </Text>
+      </View>
 
-          <Text
-            style={{ marginLeft: 20 }}
-            variant="titleMedium"
-            ellipsizeMode="tail"
-          >
-            {email}
-          </Text>
+      {/* Chat section */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      >
+        <View style={{ flex: 1 }}>
+          <GiftedChat
+            messages={messages}
+            user={{
+              _id: currentUser?.uid as string,
+              name: currentUser?.email as string,
+            }}
+            onSend={onSend}
+            inverted={false}
+            alwaysShowSend
+            keyboardShouldPersistTaps="handled"
+            bottomOffset={bottom}
+            renderAvatar={null}
+          />
         </View>
-
-        <GiftedChat
-          user={{
-            _id: currentUser?.uid as string,
-            name: currentUser?.email as string,
-          }}
-          inverted={false}
-          messages={messages}
-          keyboardShouldPersistTaps={"handled"}
-          alwaysShowSend
-          bottomOffset={0}
-          renderAvatar={null}
-          onSend={onSend}
-        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

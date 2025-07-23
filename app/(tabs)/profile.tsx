@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     backgroundColor: "#f9f9f9",
+    justifyContent: 'center'
   },
   loadingContainer: {
     flex: 1,
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 24,
+    marginBottom: 20,
     textAlign: "center",
     color: "#333",
   },
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   label: {
     fontWeight: "600",

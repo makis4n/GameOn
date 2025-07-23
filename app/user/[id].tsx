@@ -1,4 +1,5 @@
 import { auth, db } from "@/Firebase-config";
+import { sendPushNotification } from "@/utils/sendPushNotification";
 import { router, useLocalSearchParams } from "expo-router";
 import { addDoc, collection, doc, getDoc, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
@@ -122,13 +123,46 @@ const UserProfile = () => {
           ]}
           onPress={async () => {
             try {
+              if (!id || !currentUserId) return;
+
+              const toUserDoc = await getDoc(doc(db, "users", id as string));
+              const fromUserDoc = await getDoc(doc(db, "users", currentUserId));
+
+              if (!toUserDoc.exists() || !fromUserDoc.exists()) {
+                alert("User data not found");
+                return;
+              }
+
+              const toUserData = toUserDoc.data();
+              const fromUserData = fromUserDoc.data();
+
+              const expoPushToken = toUserData?.expoPushToken;
+              const fromUsername = fromUserData?.username;
+
               await addDoc(collection(db, "notifications"), {
+                title: "Invitation to Join",
                 toUser: id,
                 fromUser: currentUserId,
                 type: "invite",
+                teamName: teamName,
                 timestamp: Date.now(),
                 status: "pending",
+                read: false,
               });
+
+              if (expoPushToken) {
+                await sendPushNotification(
+                  expoPushToken,
+                  "Team Invite",
+                  `${fromUsername} has invited you to join ${teamName}`,
+                  {
+                    type: "invite",
+                    team: teamName,
+                    fromUser: currentUserId,
+                  }
+                );
+              }
+
               alert("Invite sent!");
             } catch (err) {
               console.error("Failed to send invite:", err);

@@ -1,5 +1,6 @@
 import { auth, db } from "@/Firebase-config";
-import { useLocalSearchParams } from "expo-router";
+import { sendPushNotification } from "@/utils/sendPushNotification";
+import { router, useLocalSearchParams } from "expo-router";
 import { addDoc, collection, doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
@@ -63,9 +64,13 @@ export default function TeamPage() {
 
   const requestToJoin = async () => {
     if (!userId || !team) return;
+    const userDocRef = doc(db, "users", userId);
+    const userDocSnap = await getDoc(userDocRef);
+    const username = userDocSnap.data()?.username || "A player";
 
     try {
       await addDoc(collection(db, "notifications"), {
+        title: "Request to join",
         to: team.createdBy,
         from: userId,
         teamId: id,
@@ -76,6 +81,17 @@ export default function TeamPage() {
         status: "pending",
         read: false,
       });
+      const creatorDoc = await getDoc(doc(db, "users", team.createdBy));
+      const pushToken = creatorDoc.data()?.expoPushToken;
+      if (pushToken) {
+        await sendPushNotification(
+          pushToken,
+          "Join Request",
+          `${username} wants to join your team "${team.name}"`,
+          { teamId: id, fromUserId: userId }
+        );
+      }
+
       Alert.alert("Requested", "Join request sent to team owner.");
     } catch (err) {
       console.error("Failed to send request:", err);
@@ -118,6 +134,12 @@ export default function TeamPage() {
           </Text>
         ))}
       </View>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#007AFF" }]}
+        onPress={() => router.push(`/team/matchHistory?id=${id}`)}
+      >
+        <Text style={styles.buttonText}>View Match History</Text>
+      </TouchableOpacity>
 
       {!isMember && userTeamId !== team.name && (
         <TouchableOpacity
