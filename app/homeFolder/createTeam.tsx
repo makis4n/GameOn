@@ -47,7 +47,7 @@ export default function TeamPage() {
       Alert.alert("Team Created", `"${teamName} has been created!`);
       setTeamName("");
     } catch (err) {
-      Alert.alert("Error", "Failed to create tem.");
+      Alert.alert("Error", "Failed to create team.");
       console.error(err);
     }
   };

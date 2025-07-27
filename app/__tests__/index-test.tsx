@@ -7,7 +7,6 @@ import { router } from 'expo-router';
 
 describe('Login Component', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks();
   });
 

@@ -5,7 +5,6 @@ import { router } from 'expo-router';
 
 describe('ListingOptions Component', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks();
   });
 

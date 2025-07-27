@@ -9,6 +9,7 @@ import {
   query,
   updateDoc,
   where,
+  addDoc,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
@@ -105,9 +106,8 @@ export default function NotificationsPage() {
       }
 
       if (responseMessage) {
-        // Create an in-app notification for the requester
         await addDoc(collection(db, "notifications"), {
-          to: notif.from, // UID of the requester
+          to: notif.from,
           from: auth.currentUser?.uid,
           title: "Request Update",
           message: responseMessage,
