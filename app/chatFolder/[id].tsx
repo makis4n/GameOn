@@ -91,7 +91,6 @@ export default function ChatMessageScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      {/* Header outside the keyboard avoiding view */}
       <View
         style={{
           flexDirection: "row",
@@ -120,7 +119,6 @@ export default function ChatMessageScreen() {
         </Text>
       </View>
 
-      {/* Chat section */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
