@@ -1,6 +1,7 @@
 import { auth, db } from "@/Firebase-config";
 import { sendPushNotification } from "@/utils/sendPushNotification";
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -56,45 +57,58 @@ export default function NotificationsPage() {
 
       let responseMessage = "";
 
-      if (response === "accepted" && notif.listingId) {
-        await updateDoc(doc(db, "listings", notif.listingId), {
-          status: "accepted",
-          teamNameInvited: notif.teamNameInvited || "Opponent Team",
-          read: true,
-        });
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
 
-        responseMessage = `Your match request was accepted by ${
-          notif.teamNameInvited || "a team"
-        }`;
-      }
+      const currentUserDoc = await getDoc(doc(db, "users", currentUser.uid));
+      const currentUserName = currentUserDoc.exists()
+        ? currentUserDoc.data().username || "A user"
+        : "A user";
 
-      if (response === "accepted" && notif.teamId) {
-        await updateDoc(doc(db, "users", notif.to), {
-          team: notif.teamId,
-          read: true,
-        });
+      if (response === "accepted") {
+        if (notif.listingId) {
+          const listingRef = doc(db, "listings", notif.listingId);
+          const listingSnap = await getDoc(listingRef);
 
-        const teamDocRef = doc(db, "teams", notif.teamId);
-        const teamDocSnap = await getDoc(teamDocRef);
+          if (listingSnap.exists()) {
+            await updateDoc(listingRef, {
+              status: "accepted",
+              teamNameInvited: notif.teamNameInvited || "Opponent Team",
+              read: true,
+            });
+          }
 
-        if (teamDocSnap.exists()) {
-          const teamData = teamDocSnap.data();
-          const updatedMembers = [
-            ...new Set([...(teamData.members || []), notif.to]),
-          ];
-
-          await updateDoc(teamDocRef, {
-            members: updatedMembers,
+          responseMessage = `Your match request was accepted by ${currentUserName}`;
+        } else if (notif.teamId) {
+          await updateDoc(doc(db, "users", notif.to), {
+            team: notif.teamId,
+            read: true,
           });
 
-          responseMessage = `Your request to join ${teamData.name} was accepted!`;
-        }
-      }
+          const teamDocRef = doc(db, "teams", notif.teamId);
+          const teamDocSnap = await getDoc(teamDocRef);
 
-      if (response === "rejected") {
+          if (teamDocSnap.exists()) {
+            const teamData = teamDocSnap.data();
+            const updatedMembers = [
+              ...new Set([...(teamData.members || []), notif.to]),
+            ];
+
+            await updateDoc(teamDocRef, {
+              members: updatedMembers,
+            });
+
+            responseMessage = `Your request to join ${teamData.name} was accepted by ${currentUserName}`;
+          } else {
+            responseMessage = `Your request to join the team was accepted by ${currentUserName}`;
+          }
+        } else {
+          responseMessage = `Your request was accepted by ${currentUserName}`;
+        }
+      } else if (response === "rejected") {
         responseMessage = notif.listingId
-          ? "Your match request was rejected."
-          : "Your request to join the team was rejected.";
+          ? `Your match request was rejected by ${currentUserName}`
+          : `Your request to join the team was rejected by ${currentUserName}`;
       }
 
       if (notif.fromPushToken && responseMessage) {

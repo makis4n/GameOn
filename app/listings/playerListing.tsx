@@ -55,7 +55,7 @@ export default function PlayerListing() {
         const data = docSnap.data();
         const gameTime = new Date(data.dateTime);
         if (gameTime <= now) {
-          await deleteDoc(doc(db, "player_listings", docSnap.id)); // Clean up old listings
+          await deleteDoc(doc(db, "player_listings", docSnap.id));
         } else {
           upcoming.push({ id: docSnap.id, ...data });
         }
@@ -168,7 +168,7 @@ export default function PlayerListing() {
           fetchDetails={true}
           predefinedPlaces={[]}
           textInputProps={{
-            placeholderTextColor: 'gray'
+            placeholderTextColor: "gray",
           }}
           minLength={0}
           query={{
@@ -210,6 +210,7 @@ export default function PlayerListing() {
       <TextInput
         style={styles.input}
         placeholder="e.g. Striker, Midfielder"
+        placeholderTextColor="#aaa"
         value={positions}
         onChangeText={setPositions}
       />

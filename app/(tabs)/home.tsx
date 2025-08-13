@@ -296,7 +296,7 @@ const Home = () => {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
 
-      if (!listing.userId) {
+      if (!listing.createdBy) {
         alert("Error: Listing owner not found.");
         return;
       }
@@ -318,18 +318,24 @@ const Home = () => {
         status: "pending",
         read: false,
       });
-      const recipientDoc = await getDoc(doc(db, "users", listing.userId));
+      const recipientDoc = await getDoc(doc(db, "users", listing.createdBy));
       const expoPushToken = recipientDoc.exists()
         ? recipientDoc.data().expoPushToken
         : null;
 
       if (expoPushToken) {
-        await sendPushNotification(
-          expoPushToken,
-          "New Join Request",
-          `${senderTeamName} wants to join your game.`,
-          { screen: "notifications" }
-        );
+        try {
+          await sendPushNotification(
+            expoPushToken,
+            "New Join Request",
+            `${senderTeamName} wants to join your game.`,
+            { screen: "notifications" }
+          );
+        } catch (err) {
+          console.error("Error sending push notification:", err);
+        }
+      } else {
+        console.warn("No expoPushToken found for user:", listing.createdBy);
       }
 
       alert("Request sent!");
@@ -342,35 +348,62 @@ const Home = () => {
   const sendJoinRequestForPlayer = async (listing: any) => {
     try {
       const currentUser = auth.currentUser;
-      if (!currentUser) return;
+      if (!currentUser) {
+        console.warn("No user is logged in.");
+        return;
+      }
 
-      const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-      const senderName = userDoc.exists()
-        ? userDoc.data().username || "Someone"
-        : "Someone";
+      if (!listing?.createdBy || !listing?.id) {
+        alert("Invalid listing data.");
+        return;
+      }
+
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userDocRef);
+      const senderName = userSnap.exists()
+        ? userSnap.data().username || "A user"
+        : "A team";
 
       await addDoc(collection(db, "notifications"), {
-        title: "Request to join player listing",
+        title: "Request to join game",
         to: listing.createdBy,
         from: currentUser.uid,
         listingId: listing.id,
         teamId: "",
-        teamNameInvited: "",
-        message: `${senderName} wants to join your player listing for ${listing.teamName}.`,
+        teamNameInvited: senderName,
+        message: `${senderName} wants to join your game.`,
         timestamp: new Date().toISOString(),
         status: "pending",
         read: false,
       });
-      const recipientDoc = await getDoc(doc(db, "users", listing.userId));
-      const expoPushToken = recipientDoc.exists()
-        ? recipientDoc.data().expoPushToken
-        : null;
-      await sendPushNotification(
-        expoPushToken,
-        "New Join Request",
-        `${senderName} wants to join your player listing for ${listing.teamName}.`,
-        { screen: "notifications" }
-      );
+
+      const recipientDocRef = doc(db, "users", listing.createdBy);
+      const recipientSnap = await getDoc(recipientDocRef);
+      let expoPushToken = "";
+
+      if (recipientSnap.exists()) {
+        const data = recipientSnap.data();
+
+        if (typeof data.expoPushToken === "string") {
+          expoPushToken = data.expoPushToken;
+        } else {
+          console.warn("Recipient has no valid Expo push token.");
+        }
+      } else {
+        console.warn("Recipient user document not found.");
+      }
+
+      if (
+        typeof expoPushToken === "string" &&
+        expoPushToken.startsWith("ExponentPushToken")
+      ) {
+        await sendPushNotification(
+          expoPushToken,
+          "New Join Request",
+          `${senderName} wants to join your game.`,
+          { screen: "notifications" }
+        );
+      }
 
       alert("Request sent!");
     } catch (error) {
@@ -378,7 +411,6 @@ const Home = () => {
       alert("Failed to send request. Check logs.");
     }
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={{ padding: 16 }}>
